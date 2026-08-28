@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<title>灵山胜境数据大屏</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-deep:#0a1628;
+  --cyan:#ffd34d;
+  --cyan-soft:rgba(0,212,255,0.6);
+  --gold:#ffd34d;
+  --green:#00ff88;
+  --orange:#ff9f43;
+  --pink:#ff6b9d;
+  --purple:#a55eea;
+  --text:#e0efff;
+  --text-dim:#b8c8d8;
+  --text-muted:#5a7a9a;
+  --border:rgba(0,212,255,0.25);
+}
+html,body{height:100vh;margin:0;padding:0;overflow:hidden}
+body{
+  font-family:'Microsoft YaHei','PingFang SC',system-ui,sans-serif;
+  background:var(--bg-deep);
+  color:var(--text);
+  min-width:1400px;
+  position:relative;
+  display:flex;flex-direction:column;
+}
+/* 背景 - 纯渐变 + 光效 */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse at 20% 10%,rgba(0,120,200,0.25) 0%,transparent 50%),
+    radial-gradient(ellipse at 80% 90%,rgba(0,80,160,0.2) 0%,transparent 50%),
+    radial-gradient(ellipse at 50% 50%,rgba(10,30,60,0.4) 0%,transparent 70%),
+    linear-gradient(180deg,rgba(6,20,39,0.22) 0%,rgba(7,22,43,0.12) 48%,rgba(3,10,24,0.5) 100%),
+    url('/admin/assets/data-screen-bg-v2.png') center center / cover no-repeat;
+}
+/* 叠加层 - 网格 + 微光 */
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:1;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);
+  background-size:60px 60px,60px 60px;
+  opacity:0.5;
+}
+.halo-deco{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:1000px;height:1000px;pointer-events:none;z-index:0;opacity:0.22;
+  background:radial-gradient(circle,rgba(0,212,255,0.55) 0%,rgba(0,212,255,0.18) 25%,rgba(0,150,220,0.08) 50%,transparent 70%);
+  animation:haloBreath 8s ease-in-out infinite;
+}
+@keyframes haloBreath{
+  0%,100%{opacity:0.18;transform:translate(-50%,-50%) scale(1)}
+  50%{opacity:0.28;transform:translate(-50%,-50%) scale(1.05)}
+}
+
+/* ===== 顶部标题栏 ===== */
+.screen-header{
+  position:relative;z-index:10;
+  padding:10px 32px 12px;
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
+  background:linear-gradient(180deg,rgba(0,70,130,0.7) 0%,rgba(0,40,80,0.4) 70%,transparent 100%);
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.screen-header::after{
+  content:'';position:absolute;bottom:-1px;left:8%;right:8%;height:2px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+  box-shadow:0 0 10px rgba(0,212,255,0.5);
+}
+.header-left{display:flex;align-items:center;gap:14px}
+.lotus-logo{width:44px;height:44px;filter:drop-shadow(0 0 12px rgba(0,212,255,0.5))}
+.header-center{
+  font-size:34px;font-weight:900;letter-spacing:10px;line-height:1.28;
+  font-family:'KaiTi','STKaiti','Noto Serif SC',serif;
+  background:linear-gradient(180deg,#FFF5C2 0%,#FFE87C 25%,#E6BE5A 55%,#D4AF37 85%,#8B7500 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  text-shadow: 0 0 50px rgba(230, 190, 90, 0.55);
+  position:relative;
+  padding:4px 18px 8px;
+  filter:drop-shadow(0 0 16px rgba(230,190,90,0.2));
+}
+.header-center::before{
+  content:'';position:absolute;right:calc(100% + 28px);top:50%;width:92px;height:2px;
+  background:linear-gradient(90deg,transparent,#5bc8ff);
+  box-shadow:0 0 10px rgba(91,200,255,0.6);border-radius:2px;
+  transform:translateY(-50%);
+}
+.header-center::after{
+  content:'';position:absolute;left:calc(100% + 28px);top:50%;width:92px;height:2px;
+  background:linear-gradient(90deg,#5bc8ff,transparent);
+  box-shadow:0 0 10px rgba(91,200,255,0.6);border-radius:2px;
+  transform:translateY(-50%);
+}
+/* 标题下方装饰线 - 使用边框方式 */
+.header-center{
+  border-bottom:1px solid rgba(91,200,255,0.5);
+}
+.header-right{display:flex;align-items:center;justify-self:end;margin-right:8px}
+.header-time{
+  font-size:15px;font-family:Consolas,Menlo,monospace;color:#d7f6ff;letter-spacing:0.8px;
+  padding:7px 14px;border:1px solid rgba(91,200,255,0.32);border-radius:4px;
+  background:rgba(0,40,80,0.55);box-shadow:inset 0 0 14px rgba(0,170,255,0.08);
+  min-width:198px;text-align:center;
+}
+
+/* ===== 主体 ===== */
+.dashboard{
+  position:relative;z-index:1;
+  padding:8px 18px 8px;
+  display:flex;flex-direction:column;gap:8px;
+  flex:1;min-height:0;
+}
+
+/* ===== KPI ===== */
+.kpi-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;flex-shrink:0}
+.kpi-card{
+  position:relative;
+  background:linear-gradient(135deg,rgba(0,80,150,0.32) 0%,rgba(0,50,100,0.22) 100%);
+  border:1px solid rgba(91,200,255,0.28);
+  border-radius:6px;padding:11px 14px;min-height:72px;
+  display:flex;align-items:center;gap:10px;
+  overflow:hidden;transition:all 0.3s;
+  backdrop-filter:blur(2px);box-shadow:inset 0 1px 0 rgba(255,255,255,0.05),0 8px 20px rgba(0,20,55,0.18);
+}
+.kpi-card:hover{border-color:var(--cyan);box-shadow:0 0 25px rgba(0,212,255,0.25);transform:translateY(-2px)}
+.kpi-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,#5bc8ff,var(--cyan),transparent);opacity:0.9;
+}
+.kpi-card::after{
+  content:'';position:absolute;top:-50%;right:-20%;width:140px;height:140px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(0,212,255,0.12) 0%,transparent 70%);pointer-events:none;
+}
+.kpi-icon{
+  width:36px;height:36px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle,rgba(0,212,255,0.2) 0%,transparent 72%);border:1px solid rgba(91,200,255,0.22);border-radius:50%;
+}
+.kpi-icon svg{width:22px;height:22px}
+.kpi-info{flex:1;min-width:0}
+.kpi-label{font-size:11px;color:var(--text-dim);margin-bottom:3px;letter-spacing:1px}
+.kpi-value-row{display:flex;align-items:baseline;gap:4px}
+.kpi-value{
+  font-size:23px;font-weight:700;font-family:Consolas,Menlo,monospace;
+  color:var(--cyan);line-height:1;text-shadow:0 0 20px rgba(0,212,255,0.4);
+}
+.kpi-unit{font-size:12px;color:var(--text-dim)}
+.kpi-change{font-size:10px;margin-top:2px}
+.kpi-change.up{color:var(--green)}
+.kpi-change.down{color:var(--pink)}
+.kpi-change.neutral{color:var(--text-dim)}
+
+/* ===== Panel ===== */
+.panel{
+  position:relative;
+  background:linear-gradient(180deg,rgba(0,70,130,0.42) 0%,rgba(0,45,90,0.3) 100%);
+  border:1px solid rgba(91,200,255,0.28);border-radius:6px;padding:10px 13px 11px;overflow:hidden;
+  backdrop-filter:blur(2px);
+  display:flex;flex-direction:column;min-height:0;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04),0 8px 22px rgba(0,15,45,0.2);
+}
+.panel::before{
+  content:'';position:absolute;top:0;left:20%;right:20%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan-soft),transparent);
+}
+.panel-corner{position:absolute;width:12px;height:12px;border:2px solid var(--cyan)}
+.panel-corner.tl{top:-1px;left:-1px;border-right:none;border-bottom:none}
+.panel-corner.tr{top:-1px;right:-1px;border-left:none;border-bottom:none}
+.panel-corner.bl{bottom:-1px;left:-1px;border-right:none;border-top:none}
+.panel-corner.br{bottom:-1px;right:-1px;border-left:none;border-top:none}
+.panel-title{
+  display:flex;align-items:center;gap:8px;
+  font-size:13px;font-weight:600;color:#fff;margin-bottom:10px;min-height:20px;
+  font-family:'KaiTi','STKaiti','Noto Serif SC',serif;
+  flex-shrink:0;
+}
+.panel-title::before{
+  content:'';width:3px;height:14px;background:var(--cyan);
+  box-shadow:0 0 8px var(--cyan);
+}
+.panel-title .en{font-size:10px;color:#79b9d8;font-weight:400;letter-spacing:1px;font-family:monospace}
+.panel-title .scope{margin-left:auto;font-size:10px;color:#7b9bb8;font-weight:400;letter-spacing:0;font-family:monospace;white-space:nowrap}
+.panel-chart{width:100%;height:100%;flex:1;min-height:0}
+
+/* ===== Grids ===== */
+.main-grid{display:grid;grid-template-columns:1.05fr 1.7fr 1.05fr;gap:10px;flex:1;min-height:0}
+.bottom-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;flex-shrink:0;height:200px}
+
+/* ===== Globe ===== */
+.center-globe{
+  position:relative;
+  background:linear-gradient(ellipse at center,rgba(0,80,140,0.44) 0%,rgba(0,45,90,0.3) 100%);
+  border:1px solid rgba(91,200,255,0.42);border-radius:6px;padding:11px 14px 12px;overflow:hidden;
+  backdrop-filter:blur(2px);
+  display:flex;flex-direction:column;min-height:0;box-shadow:inset 0 0 42px rgba(0,120,220,0.1),0 0 30px rgba(0,130,230,0.12);
+}
+.center-globe::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+}
+.globe-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-shrink:0}
+.globe-title .left{
+  font-size:15px;font-weight:600;color:#fff;letter-spacing:0.5px;
+  font-family:'KaiTi','STKaiti','Noto Serif SC',serif;
+}
+.globe-title{padding-bottom:8px;border-bottom:1px solid rgba(91,200,255,0.18)}
+.globe-title .left::before{
+  content:'';display:inline-block;width:3px;height:14px;background:var(--cyan);
+  margin-right:8px;box-shadow:0 0 8px var(--cyan);vertical-align:-2px;
+}
+.globe-title .right{font-size:11px;color:var(--text-dim);font-family:monospace}
+
+/* 放射状布局 - 中央球体 + 左右各3个数据项 */
+.globe-main{
+  position:relative;
+  flex:1;min-height:0;
+  display:block;
+}
+.globe-main .radial-lines{
+  position:absolute;inset:0;width:100%;height:100%;
+  pointer-events:none;z-index:2;
+}
+.globe-main .radial-center{
+  position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);
+  z-index:5;
+  width:360px;height:360px;
+  display:flex;align-items:center;justify-content:center;
+}
+.globe-main .radial-item{
+  position:absolute;
+  width:80px;                  /* ✅ 正圆，宽高一致 */
+  height:80px;
+  z-index:4;
+  padding:0;
+  display:flex;                /* ✅ 内容居中 */
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  background:radial-gradient(circle at 35% 30%,rgba(0,70,130,0.58) 0%,rgba(0,35,70,0.46) 70%,rgba(0,20,50,0.62) 100%);
+  border:2px solid rgba(0,180,255,0.35);
+  border-radius:50%;            /* ✅ 正圆 */
+  backdrop-filter:blur(2px);
+  transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+  box-shadow:
+    0 0 20px rgba(0,150,220,0.2),
+    inset 0 0 15px rgba(0,100,200,0.15);
+}
+.globe-main .radial-item::before{
+  content:'';position:absolute;
+  top:-4px;left:50%;transform:translateX(-50%);
+  width:8px;height:8px;border-radius:50%;
+  background:var(--card-c,var(--cyan));
+  box-shadow:0 0 10px 2px var(--card-c,var(--cyan));
+}
+.globe-main .radial-item:hover{
+  border-color:rgba(0,212,255,0.7);
+  transform:scale(1.08);
+  box-shadow:
+    0 0 30px rgba(0,180,255,0.4),
+    inset 0 0 20px rgba(0,120,220,0.25);
+}
+.globe-main .radial-item .r-name{
+  font-size:10px;              /* ✅ 缩小，适应圆 */
+  color:var(--text-dim);
+  letter-spacing:0.5px;
+  text-align:center;
+  line-height:1.2;
+}
+.globe-main .radial-item .r-value{
+  font-size:18px;              /* ✅ 从22缩到18 */
+  font-weight:700;
+  font-family:Consolas,monospace;
+  line-height:1;
+  color:var(--card-c,var(--cyan));
+  text-shadow:0 0 10px var(--card-c,rgba(0,212,255,0.5));
+  text-align:center;
+}
+.globe-main .radial-item .r-unit{
+  font-size:10px;color:var(--text-dim);margin-left:3px;font-weight:400;
+}
+/* 左侧3项 */
+.globe-main .item-l1{ left:-10px;  top:6%; }
+.globe-main .item-l2{ left:-10px;  top:40%; }
+.globe-main .item-l3{ left:-10px;  top:74%; }
+/* 右侧3项 → 现保留2项, 重新分布位置 */
+.globe-main .item-r2{ right:-10px; top:24%; }
+.globe-main .item-r3{ right:-10px; top:68%; }
+
+/* ============ 全息球体容器 — 正圆，使用 inset 确保宽高一致 ============ */
+.center-stage{
+  position:relative;width:360px;height:360px;flex-shrink:0;
+}
+
+/* 外层圆环 —— 360×360 正圆 */
+.ring-outer{
+  position:absolute;inset:0;
+  border-radius:50%;
+  border:1px solid rgba(0,180,255,0.35);
+  box-shadow:
+    0 0 40px rgba(0,140,255,0.25),
+    inset 0 0 60px rgba(0,100,200,0.15);
+  animation:ringPulse 4s ease-in-out infinite;
+}
+.ring-outer::before{
+  content:'';position:absolute;inset:-16px;border-radius:50%;
+  border:1px solid rgba(0,180,255,0.12);
+}
+.ring-outer::after{
+  content:'';position:absolute;inset:-34px;border-radius:50%;
+  border:1px dashed rgba(0,180,255,0.08);
+  animation:rotate 60s linear infinite;
+}
+
+/* 中间圆环（带刻度） —— 280×280 正圆 */
+.ring-middle{
+  position:absolute;inset:40px;
+  border-radius:50%;
+  border:1px solid rgba(0,200,255,0.25);
+  animation:rotate 30s linear infinite reverse;
+}
+.ring-middle .tick{
+  position:absolute;width:2px;height:8px;
+  background:rgba(0,200,255,0.4);
+  top:-4px;left:50%;
+  transform-origin:50% 140px;
+  border-radius:1px;
+}
+
+/* 内层圆环 + 核心球 —— 200×200 正圆 */
+.ring-inner{
+  position:absolute;inset:80px;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 40%,rgba(0,120,200,0.35) 0%,rgba(0,40,100,0.5) 50%,rgba(0,15,50,0.85) 100%);
+  border:1.5px solid rgba(0,200,255,0.38);
+  box-shadow:
+    0 0 60px rgba(0,160,255,0.3),
+    inset 0 0 80px rgba(0,100,200,0.25),
+    inset -8px -10px 25px rgba(0,10,40,0.5),
+    inset 8px 6px 20px rgba(140,210,255,0.15);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:3;
+}
+
+/* 核心光晕 —— 在 ring-inner 内部 */
+.core-glow{
+  position:absolute;inset:20px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,200,255,0.4) 0%,rgba(0,120,220,0.15) 45%,transparent 72%);
+  animation:corePulse 3s ease-in-out infinite;
+  z-index:2;
+}
+
+/* 旋转弧线装饰 —— 与 ring-outer 同尺寸 360×360 */
+.arc-segment{position:absolute;inset:0;border-radius:50%;}
+.arc-segment svg{width:100%;height:100%;animation:rotate 20s linear infinite;}
+
+/* 环上发光点 —— 与 ring-outer 同尺寸 360×360 */
+.ring-dots{position:absolute;inset:0;animation:rotate 25s linear infinite;}
+.ring-dots .dot{
+  position:absolute;width:5px;height:5px;background:#00d4ff;border-radius:50%;
+  box-shadow:0 0 8px 2px rgba(0,212,255,0.8),0 0 16px 4px rgba(0,180,255,0.4);
+  top:50%;left:50%;
+}
+.ring-dots .dot.d1{transform:rotate(0deg) translateX(180px) translateY(-50%);}
+.ring-dots .dot.d2{transform:rotate(72deg) translateX(180px) translateY(-50%);}
+.ring-dots .dot.d3{transform:rotate(144deg) translateX(180px) translateY(-50%);}
+.ring-dots .dot.d4{transform:rotate(216deg) translateX(180px) translateY(-50%);}
+.ring-dots .dot.d5{transform:rotate(288deg) translateX(180px) translateY(-50%);}
+
+/* ============ LOGO放大并加深 ============ */
+.lotus-icon{
+  width:70px;height:70px;position:relative;z-index:5;
+  filter:
+    drop-shadow(0 0 22px rgba(0,200,255,0.75))
+    drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+}
+.lotus-icon path, .lotus-icon circle, .lotus-icon line{
+  stroke-width:1.2;
+}
+.center-title{
+  font-size:15px;font-weight:600;letter-spacing:4px;
+  margin-top:10px;z-index:5;position:relative;
+  background:linear-gradient(180deg,#ffffff 0%,#7fd8ff 60%,#3ba8ff 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  text-shadow:0 0 20px rgba(0,180,255,0.5);
+}
+.center-subtitle{
+  font-size:10px;letter-spacing:2px;margin-top:3px;
+  color:rgba(140,215,255,0.65);text-transform:uppercase;
+  z-index:5;position:relative;
+}
+.center-value{
+  font-size:22px;font-weight:700;margin-top:6px;
+  color:#c8f5ff;font-family:Consolas,monospace;
+  text-shadow:0 0 16px rgba(0,200,255,0.8);
+  z-index:5;position:relative;
+}
+
+/* 高光线（左上） */
+.ring-inner::before{
+  content:'';position:absolute;top:10%;left:20%;width:45%;height:32%;
+  background:radial-gradient(ellipse at 28% 28%,rgba(255,255,255,0.4) 0%,rgba(200,230,255,0.2) 38%,rgba(120,180,240,0.08) 65%,transparent 85%);
+  border-radius:50%;pointer-events:none;filter:blur(2px);
+}
+
+/* ============ 底座舞台弧线 ============ */
+.bottom-stage{
+  position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  width:380px;height:120px;overflow:hidden;pointer-events:none;display:none;
+}
+.stage-arc{
+  position:absolute;bottom:-50px;left:50%;transform:translateX(-50%);
+  width:360px;height:140px;border-radius:50%;
+  background:radial-gradient(ellipse at 50% 0%,rgba(0,180,255,0.22) 0%,rgba(0,80,180,0.08) 40%,transparent 70%);
+  border-top:1px solid rgba(0,200,255,0.3);
+  box-shadow:0 -18px 50px rgba(0,160,255,0.22);display:none;
+}
+.stage-arc::before{
+  content:'';position:absolute;top:18px;left:50%;transform:translateX(-50%);
+  width:280px;height:100px;border-radius:50%;
+  border-top:1px solid rgba(0,200,255,0.2);
+  border-left:1px solid rgba(0,200,255,0.08);
+  border-right:1px solid rgba(0,200,255,0.08);
+}
+.stage-arc::after{
+  content:'';position:absolute;top:38px;left:50%;transform:translateX(-50%);
+  width:200px;height:70px;border-radius:50%;
+  border-top:1px solid rgba(0,200,255,0.25);
+  box-shadow:0 0 30px rgba(0,180,255,0.18);
+}
+
+/* 地面阴影 */
+.globe-ground-shadow{
+  position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
+  width:220px;height:22px;pointer-events:none;z-index:0;display:none;
+  background:radial-gradient(ellipse,rgba(0,0,0,0.55) 0%,rgba(0,5,15,0.35) 30%,rgba(0,10,25,0.2) 50%,rgba(0,15,35,0.08) 70%,transparent 90%);
+  filter:blur(8px);
+  animation:shadowFloat 5s ease-in-out infinite;
+}
+
+/* ============ 浮动粒子 ============ */
+.particles{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:6px;}
+.particle{
+  position:absolute;width:2px;height:2px;
+  background:rgba(120,220,255,0.85);border-radius:50%;
+  box-shadow:0 0 4px rgba(0,200,255,0.8);
+  animation:float linear infinite;
+}
+
+/* ============ 扫描线背景 ============ */
+.scan-overlay{
+  position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,200,255,0.012) 2px,rgba(0,200,255,0.012) 4px);
+  z-index:1;
+}
+
+/* ============ 动画 ============ */
+@keyframes rotate{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes ringPulse{
+  0%,100%{box-shadow:0 0 40px rgba(0,140,255,0.25),inset 0 0 60px rgba(0,100,200,0.15);}
+  50%{box-shadow:0 0 60px rgba(0,180,255,0.4),inset 0 0 80px rgba(0,120,220,0.25);}
+}
+@keyframes corePulse{
+  0%,100%{opacity:0.7;transform:scale(1);}
+  50%{opacity:1;transform:scale(1.08);}
+}
+@keyframes shadowFloat{
+  0%,100%{transform:translateX(-50%) scaleX(1) scaleY(1);opacity:0.6;}
+  50%{transform:translateX(-50%) scaleX(0.82) scaleY(0.72);opacity:0.38;}
+}
+@keyframes float{
+  0%{transform:translateY(0) translateX(0);opacity:0;}
+  10%{opacity:1;}
+  90%{opacity:1;}
+  100%{transform:translateY(-480px) translateX(20px);opacity:0;}
+}
+@keyframes dataPulse{
+  0%,100%{opacity:0.4;}
+  50%{opacity:1;}
+}
+@keyframes globeFloat{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-8px)}
+}
+@keyframes particleFloat{
+  0%{transform:translateY(0) translateX(0);opacity:0;}
+  15%{opacity:1;}
+  50%{transform:translateY(-120px) translateX(15px);opacity:0.8;}
+  85%{opacity:0.5;}
+  100%{transform:translateY(-260px) translateX(-10px);opacity:0;}
+}
+
+/* 右侧统计卡片 - 增强视觉层级与灵动性 */
+.stat-card{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 14px;
+  background:linear-gradient(135deg,rgba(0,55,110,0.32) 0%,rgba(0,28,65,0.22) 100%);
+  border:1px solid rgba(0,180,255,0.18);
+  border-radius:8px;
+  position:relative;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+  overflow:hidden;
+  backdrop-filter:blur(2px);
+}
+.stat-card::before{
+  content:'';position:absolute;left:0;top:10%;bottom:10%;width:3px;
+  border-radius:2px;
+  background:var(--card-color,var(--cyan));
+  box-shadow:0 0 10px var(--card-color,var(--cyan));
+}
+.stat-card::after{
+  content:'';position:absolute;right:0;top:0;width:60px;height:60px;
+  background:radial-gradient(circle,rgba(0,212,255,0.08) 0%,transparent 70%);
+  pointer-events:none;
+}
+.stat-card:hover{
+  border-color:rgba(0,212,255,0.5);
+  background:linear-gradient(135deg,rgba(0,65,130,0.42) 0%,rgba(0,35,80,0.32) 100%);
+  transform:translateX(6px) scale(1.02);
+  box-shadow:0 4px 20px rgba(0,150,220,0.2);
+}
+.stat-card .stat-icon{
+  width:44px;height:44px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:50%;
+  position:relative;
+  transition:transform 0.3s;
+}
+.stat-card:hover .stat-icon{transform:scale(1.1)}
+.stat-card .stat-icon svg{width:32px;height:32px}
+.stat-card .stat-body{flex:1;min-width:0}
+.stat-card .stat-name{font-size:12px;color:var(--text-dim);margin-bottom:3px;letter-spacing:0.5px}
+.stat-card .stat-num{font-size:20px;font-weight:700;font-family:Consolas,monospace;line-height:1}
+.stat-card .stat-unit{font-size:11px;color:var(--text-dim);margin-left:3px}
+.stat-card .stat-bar{
+  width:60px;height:4px;background:rgba(0,180,255,0.1);border-radius:2px;overflow:hidden;margin-top:6px;
+}
+.stat-card .stat-bar-fill{height:100%;border-radius:2px;transition:width 1s ease}
+
+/* 连接线 - 从球到卡片 */
+.globe-connector{
+  position:absolute;pointer-events:none;z-index:1;
+}
+.globe-connector svg{width:100%;height:100%}
+
+/* ===== Rank ===== */
+.rank-list{display:flex;flex-direction:column;justify-content:space-evenly;gap:8px;flex:1;min-height:0;overflow:hidden}
+.rank-list::-webkit-scrollbar{width:3px}
+.rank-list::-webkit-scrollbar-thumb{background:rgba(0,212,255,0.3);border-radius:3px}
+.rank-list::-webkit-scrollbar-track{background:transparent}
+.rank-item{display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;padding:4px 0}
+.rank-no{
+  width:24px;height:24px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:#fff;
+  background:rgba(0,212,255,0.2);border:1px solid rgba(0,212,255,0.3);
+}
+.rank-item:nth-child(1) .rank-no{background:linear-gradient(135deg,#ff6b6b,#ee5a52);border-color:#ff6b6b}
+.rank-item:nth-child(2) .rank-no{background:linear-gradient(135deg,#ffa94d,#ff922b);border-color:#ffa94d}
+.rank-item:nth-child(3) .rank-no{background:linear-gradient(135deg,#ffd43b,#fab005);border-color:#ffd43b}
+.rank-name{font-size:14px;color:var(--text)}
+.rank-bar{flex:1;height:6px;background:rgba(0,212,255,0.12);border-radius:3px;overflow:hidden}
+.rank-bar-fill{height:100%;border-radius:3px;transition:width 1s ease}
+.rank-count{font-size:13px;color:var(--cyan);font-family:monospace;font-weight:600;min-width:48px;text-align:right}
+.rank-pct{font-size:12px;color:var(--text-dim);min-width:44px;text-align:right}
+
+/* ===== Feedback ===== */
+.feedback-scroll{flex:1;min-height:0;overflow:hidden;position:relative}
+.feedback-scroll::before,.feedback-scroll::after{
+  content:'';position:absolute;left:0;right:0;height:24px;pointer-events:none;z-index:2;
+}
+.feedback-scroll::before{top:0;background:linear-gradient(180deg,rgba(10,25,55,0.85),rgba(10,25,55,0))}
+.feedback-scroll::after{bottom:0;background:linear-gradient(0deg,rgba(10,25,55,0.85),rgba(10,25,55,0))}
+.feedback-list{display:flex;flex-direction:column;gap:6px}
+.feedback-item{
+  display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;
+  padding:7px 10px;background:rgba(0,70,130,0.4);
+  border:1px solid rgba(0,212,255,0.12);border-radius:6px;transition:all 0.25s;
+}
+.feedback-item:hover{border-color:var(--cyan);background:rgba(0,90,160,0.5);transform:translateX(4px)}
+.feedback-stars{color:var(--gold);font-size:11px;letter-spacing:1px}
+.feedback-text{font-size:12px;color:var(--text);line-height:1.4}
+.feedback-time{font-size:10px;color:var(--text-dim);font-family:monospace;white-space:nowrap}
+
+/* ===== Footer ===== */
+.footer-slogan{
+  position:relative;z-index:1;text-align:center;padding:4px 0 6px;
+  font-family:'KaiTi','STKaiti','Noto Serif SC',serif;
+  font-size:14px;letter-spacing:8px;color:var(--text-dim);
+  flex-shrink:0;
+}
+.footer-slogan .sep{margin:0 16px;color:var(--cyan);opacity:0.6}
+.footer-slogan .cyan{color:var(--cyan);text-shadow:0 0 15px rgba(0,212,255,0.4)}
+
+/* Animation */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeUp 0.5s ease-out forwards}
+@media(max-width:1400px){.kpi-row{grid-template-columns:repeat(3,1fr)}}
+
+.globe-center-title{
+  font-size:14px;
+  font-weight:bold;
+  letter-spacing:2px;
+  margin-top:4px;
+  background:linear-gradient(180deg,#FFF5C2 0%,#FFE87C 25%,#E6BE5A 55%,#D4AF37 85%,#8B7500 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  text-shadow:0 0 12px rgba(230,190,90,0.65);
+  white-space:nowrap;
+  z-index:5;
+  position:relative;
+}
+</style>
+</head>
+<body>
+
+<div class="halo-deco"></div>
+
+<!-- Header -->
+<div class="screen-header">
+  <div class="header-left">
+    <svg class="lotus-logo lotus-icon" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 6 Q18 12 16 18 Q14 12 16 6Z" fill="rgba(184,146,58,0.25)" stroke="rgba(184,146,58,0.5)" stroke-width="0.8"/>
+        <path d="M8 10 Q12 13 14 18 Q10 15 8 10Z" fill="rgba(184,146,58,0.15)" stroke="rgba(184,146,58,0.35)" stroke-width="0.6"/>
+        <path d="M24 10 Q20 13 18 18 Q22 15 24 10Z" fill="rgba(184,146,58,0.15)" stroke="rgba(184,146,58,0.35)" stroke-width="0.6"/>
+        <path d="M4 14 Q9 14 12 18 Q8 16 4 14Z" fill="rgba(184,146,58,0.08)" stroke="rgba(184,146,58,0.2)" stroke-width="0.5"/>
+        <path d="M28 14 Q23 14 20 18 Q24 16 28 14Z" fill="rgba(184,146,58,0.08)" stroke="rgba(184,146,58,0.2)" stroke-width="0.5"/>
+        <circle cx="16" cy="17" r="2" fill="rgba(184,146,58,0.3)" stroke="rgba(184,146,58,0.5)" stroke-width="0.5"/>
+        <path d="M16 18 Q15 24 16 28" stroke="rgba(90,138,106,0.3)" stroke-width="0.8" fill="none"/>
+        <path d="M10 26 Q13 24 16 26 Q19 24 22 26" stroke="rgba(90,138,106,0.2)" stroke-width="0.6" fill="none"/>
+      </g>
+    </svg>
+  </div>
+  <div class="header-center">灵山胜境<br>数据大屏</div>
+  <div class="header-right">
+    <span class="header-time" id="screen-time">--:--:--</span>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div class="dashboard">
+
+  <!-- KPI -->
+  <div class="kpi-row">
+    <div class="kpi-card fade-in">
+      <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
+      <div class="kpi-info">
+        <div class="kpi-label">今日访客</div>
+        <div class="kpi-value-row"><span class="kpi-value" id="kpi-today">--</span><span class="kpi-unit">人</span></div>
+        <div class="kpi-change" id="kpi-today-change"></div>
+      </div>
+    </div>
+    <div class="kpi-card fade-in" style="animation-delay:.1s">
+      <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#ffd34d" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+      <div class="kpi-info">
+        <div class="kpi-label">近7日访客</div>
+        <div class="kpi-value-row"><span class="kpi-value" style="color:#ffd34d" id="kpi-week">--</span><span class="kpi-unit">人</span></div>
+      </div>
+    </div>
+    <div class="kpi-card fade-in" style="animation-delay:.2s">
+      <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9f43" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+      <div class="kpi-info">
+        <div class="kpi-label">累计对话</div>
+        <div class="kpi-value-row"><span class="kpi-value" style="color:#ff9f43" id="kpi-chats">--</span><span class="kpi-unit">次</span></div>
+      </div>
+    </div>
+    <div class="kpi-card fade-in" style="animation-delay:.3s">
+      <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+      <div class="kpi-info">
+        <div class="kpi-label">平均满意度</div>
+        <div class="kpi-value-row"><span class="kpi-value" style="color:#00ff88" id="kpi-sat">--</span><span class="kpi-unit">★</span></div>
+      </div>
+    </div>
+    <div class="kpi-card fade-in" style="animation-delay:.5s">
+      <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+      <div class="kpi-info">
+        <div class="kpi-label">满意趋势</div>
+        <div class="kpi-value-row"><span class="kpi-value" id="kpi-trend">--</span><span class="kpi-unit">%</span></div>
+        <div class="kpi-change" id="kpi-trend-change"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="main-grid">
+    <!-- Left column -->
+    <div style="display:flex;flex-direction:column;gap:10px;min-height:0">
+      <div class="panel" style="flex:1.4;min-height:0">
+        <span class="panel-corner tl"></span><span class="panel-corner tr"></span>
+        <span class="panel-corner bl"></span><span class="panel-corner br"></span>
+        <div class="panel-title">近7日对话趋势 <span class="en">TREND</span><span class="scope">最近7天 · 次 / ★</span></div>
+        <div class="panel-chart" id="chart-trend"></div>
+      </div>
+      <div class="panel" style="flex:1;min-height:0">
+        <span class="panel-corner tl"></span><span class="panel-corner tr"></span>
+        <span class="panel-corner bl"></span><span class="panel-corner br"></span>
+        <div class="panel-title">对话情绪分布 <span class="en">SENTIMENT</span><span class="scope">当前统计范围</span></div>
+        <div class="panel-chart" id="chart-sentiment"></div>
+      </div>
+    </div>
+
+    <!-- Center: Globe -->
+    <div class="center-globe">
+      <span class="panel-corner tl"></span><span class="panel-corner tr"></span>
+      <span class="panel-corner bl"></span><span class="panel-corner br"></span>
+      <div class="globe-title">
+        <div class="left">游客服务数据 · 累计对话分布</div>
+      </div>
+      <div class="globe-main">
+        <!-- SVG 放射状连接线 -->
+        <svg class="radial-lines" id="radialLines"></svg>
+
+        <!-- 左侧3个数据项 -->
+        <div class="radial-item item-l1" style="--card-c:#00d4ff">
+          <div class="r-name">累计咨询占比</div>
+          <div class="r-value" id="stat-consult">--<span class="r-unit">%</span></div>
+        </div>
+        <div class="radial-item item-l2" style="--card-c:#ffd34d">
+          <div class="r-name">累计票务占比</div>
+          <div class="r-value" id="stat-ticket">--<span class="r-unit">%</span></div>
+        </div>
+        <div class="radial-item item-l3" style="--card-c:#ff9f43">
+          <div class="r-name">累计导览占比</div>
+          <div class="r-value" id="stat-guide">--<span class="r-unit">%</span></div>
+        </div>
+
+        <!-- 中央球体 -->
+        <div class="radial-center">
+          <div class="scan-overlay"></div>
+          <div class="globe-ground-shadow"></div>
+          <div class="particles" id="globe-particles"></div>
+
+          <div class="center-stage" style="animation:globeFloat 5s ease-in-out infinite">
+            <!-- 外层圆环 -->
+            <div class="ring-outer"></div>
+            <!-- 中间刻度圆环 -->
+            <div class="ring-middle" id="ringMiddle"></div>
+
+            <!-- 旋转弧线装饰 -->
+            <div class="arc-segment">
+              <svg viewBox="0 0 360 360">
+                <defs>
+                  <linearGradient id="arcGradA" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#00d4ff" stop-opacity="0"/>
+                    <stop offset="50%" stop-color="#00d4ff" stop-opacity="0.75"/>
+                    <stop offset="100%" stop-color="#00d4ff" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <circle cx="180" cy="180" r="175" fill="none" stroke="url(#arcGradA)" stroke-width="1.5" stroke-dasharray="40 120"/>
+              </svg>
+            </div>
+
+            <!-- 环上发光点 -->
+            <div class="ring-dots">
+              <div class="dot d1"></div>
+              <div class="dot d2"></div>
+              <div class="dot d3"></div>
+              <div class="dot d4"></div>
+              <div class="dot d5"></div>
+            </div>
+
+            <!-- 核心球（LOGO，文字） -->
+            <div class="ring-inner">
+              <div class="core-glow"></div>
+              <svg class="lotus-icon" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 6 Q18 12 16 18 Q14 12 16 6Z"
+                        fill="rgba(220,170,55,0.55)"
+                        stroke="rgba(230,180,60,0.95)" stroke-width="1.1"/>
+                  <path d="M8 10 Q12 13 14 18 Q10 15 8 10Z"
+                        fill="rgba(210,160,45,0.4)"
+                        stroke="rgba(220,170,50,0.75)" stroke-width="0.9"/>
+                  <path d="M24 10 Q20 13 18 18 Q22 15 24 10Z"
+                        fill="rgba(210,160,45,0.4)"
+                        stroke="rgba(220,170,50,0.75)" stroke-width="0.9"/>
+                  <path d="M4 14 Q9 14 12 18 Q8 16 4 14Z"
+                        fill="rgba(200,150,35,0.25)"
+                        stroke="rgba(210,160,45,0.55)" stroke-width="0.7"/>
+                  <path d="M28 14 Q23 14 20 18 Q24 16 28 14Z"
+                        fill="rgba(200,150,35,0.25)"
+                        stroke="rgba(210,160,45,0.55)" stroke-width="0.7"/>
+                  <circle cx="16" cy="17" r="2.2"
+                          fill="rgba(220,170,50,0.55)"
+                          stroke="rgba(235,185,65,0.95)" stroke-width="0.7"/>
+                  <path d="M16 18 Q15 24 16 28"
+                        stroke="rgba(55,110,80,0.55)" stroke-width="1.1" fill="none"/>
+                  <path d="M10 26 Q13 24 16 26 Q19 24 22 26"
+                        stroke="rgba(50,100,72,0.4)" stroke-width="0.85" fill="none"/>
+                </g>
+              </svg>
+               <div class="globe-center-title">游客服务统计</div>
+            </div>
+          </div>
+
+          <!-- 底部舞台弧线 -->
+          <div class="bottom-stage">
+            <div class="stage-arc"></div>
+          </div>
+        </div>
+
+        <!-- 右侧2个数据项 -->
+        <div class="radial-item item-r2" style="--card-c:#ff6b9d">
+          <div class="r-name">满意趋势</div>
+          <div class="r-value" id="stat-trend">--<span class="r-unit">%</span></div>
+        </div>
+        <div class="radial-item item-r3" style="--card-c:#00ff88">
+          <div class="r-name">实时满意度</div>
+          <div class="r-value" id="stat-sat">--<span class="r-unit">★</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div style="display:flex;flex-direction:column;gap:10px;min-height:0">
+      <div class="panel" style="flex:1;min-height:0">
+          <span class="panel-corner tl"></span><span class="panel-corner tr"></span>
+          <span class="panel-corner bl"></span><span class="panel-corner br"></span>
+          <div class="panel-title">话题热度排行 <span class="en">TOPICS</span><span class="scope">当前范围 · TOP 3</span></div>
+          <div id="rank-topics" class="rank-list"></div>
+        </div>
+        <div class="panel" style="flex:1;min-height:0">
+        <span class="panel-corner tl"></span><span class="panel-corner tr"></span>
+        <span class="panel-corner bl"></span><span class="panel-corner br"></span>
+        <div class="panel-title">景点提及排行 <span class="en">SPOTS</span><span class="scope">当前范围 · TOP 3</span></div>
+        <div id="rank-spots" class="rank-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom grid -->
+  <div class="bottom-grid">
+    <div class="panel">
+      <span class="panel-corner tl"></span><span class="panel-corner tr"></span>
+      <span class="panel-corner bl"></span><span class="panel-corner br"></span>
+      <div class="panel-title">对话高峰时段（过去168小时） <span class="en">PEAK HOURS</span><span class="scope">按小时统计</span></div>
+      <div class="panel-chart" id="chart-hourly"></div>
+    </div>
+    <div class="panel">
+      <span class="panel-corner tl"></span><span class="panel-corner tr"></span>
+      <span class="panel-corner bl"></span><span class="panel-corner br"></span>
+      <div class="panel-title">最新已评分对话反馈 <span class="en">FEEDBACK</span><span class="scope">最新20条</span></div>
+      <div class="feedback-scroll" id="feedback-scroll">
+        <div class="feedback-list" id="feedback-list"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <span class="panel-corner tl"></span><span class="panel-corner tr"></span>
+      <span class="panel-corner bl"></span><span class="panel-corner br"></span>
+      <div class="panel-title">对话兴趣分布（累计） <span class="en">PROFILES</span><span class="scope">累计对话</span></div>
+      <div class="panel-chart" id="chart-profiles"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer-slogan">
+  <span class="cyan">灵山胜境</span>
+  <span class="sep">❀</span>
+  <span class="cyan">慈心如海</span>
+  <span class="sep">❀</span>
+  <span class="cyan">福泽天下</span>
+</div>
+
+<script>
+var API = window.location.origin + '/api/v1/data-screen';
+var charts = {};
+var feedbackTimer = null;
+
+function $(id) { return document.getElementById(id); }
+function getToken() { return window.localStorage.getItem('admin_token') || ''; }
+function fmt(n) { n = n || 0; if (n>=10000) return (n/10000).toFixed(1)+'w'; if (n>=1000) return (n/1000).toFixed(1)+'k'; return String(n); }
+function setRadialMetric(id, value, unit, digits) {
+  var el = $(id); if (!el) return;
+  el.textContent = value === null || value === undefined ? '--' : (digits === undefined ? value : Number(value).toFixed(digits));
+  if (value !== null && value !== undefined) {
+    var suffix = document.createElement('span');
+    suffix.className = 'r-unit';
+    suffix.textContent = unit;
+    el.appendChild(suffix);
+  }
+}
+
+function authFetch(url) {
+  var t = getToken();
+  if (!t) { window.location.href = '/admin'; return Promise.reject('no token'); }
+  return fetch(url, { headers: { 'X-ADMIN-TOKEN': t } }).then(function(r) { if (!r.ok) throw new Error('HTTP '+r.status); return r; });
+}
+
+function tickTime() {
+  var d = new Date();
+  var y = d.getFullYear();
+  var mo = String(d.getMonth() + 1).padStart(2, '0');
+  var da = String(d.getDate()).padStart(2, '0');
+  var h = String(d.getHours()).padStart(2, '0');
+  var mi = String(d.getMinutes()).padStart(2, '0');
+  var s = String(d.getSeconds()).padStart(2, '0');
+  $('screen-time').textContent = y + '-' + mo + '-' + da + ' ' + h + ':' + mi + ':' + s;
+}
+
+function initCharts() {
+  ['chart-trend','chart-sentiment','chart-hourly','chart-profiles'].forEach(function(id) {
+    var el = $(id); if (el) charts[id] = echarts.init(el);
+  });
+}
+
+function resizeCharts() { Object.values(charts).forEach(function(c) { if (c) c.resize(); }); }
+
+// 初始化中心球体装饰：刻度环 + 浮动粒子
+function initGlobeDecor() {
+  // 1. 生成中间圆环刻度(48个) - 半径匹配 ring-middle 220直径/2 = 110
+  var ring = $('ringMiddle');
+  if (ring) {
+    var total = 48;
+    var r = 140;
+    for (var i = 0; i < total; i++) {
+      var tick = document.createElement('div');
+      var angle = (360 / total) * i;
+      var isLong = (i % 4 === 0);
+      tick.style.cssText = [
+        'position:absolute;',
+        'left:50%;top:50%;',
+        'width:2px;',
+        'height:' + (isLong ? '11px' : '6px') + ';',
+        'background:linear-gradient(to bottom, rgba(0,212,255,' + (isLong ? 0.92 : 0.5) + '), transparent);',
+        'transform-origin:50% ' + r + 'px;',
+        'transform:translateX(-50%) translateY(-100%) rotate(' + angle + 'deg);',
+        'margin-top:-' + r + 'px;',
+        'border-radius:1px;'
+      ].join('');
+      ring.appendChild(tick);
+    }
+  }
+  // 2. 生成浮动粒子(30个)
+  var pc = $('globe-particles');
+  if (pc) {
+    for (var j = 0; j < 30; j++) {
+      var p = document.createElement('div');
+      var size = 1 + Math.random() * 2.5;
+      var dur = 8 + Math.random() * 14;
+      var delay = Math.random() * -18;
+      var hue = 190 + Math.random() * 30;
+      p.style.cssText = [
+        'position:absolute;width:' + size + 'px;height:' + size + 'px;',
+        'border-radius:50%;',
+        'left:' + (Math.random() * 100) + '%;top:' + (Math.random() * 100) + '%;',
+        'background:radial-gradient(circle, hsla(' + hue + ',100%,80%,0.95), transparent 70%);',
+        'box-shadow:0 0 ' + (size * 3) + 'px hsla(' + hue + ',100%,70%,0.6);',
+        'animation:particleFloat ' + dur + 's ' + delay + 's linear infinite;'
+      ].join('');
+      pc.appendChild(p);
+    }
+  }
+}
+
+// 绘制放射状连接线 - 从球体边缘到每个数据项
+function drawRadialLines() {
+  var container = document.querySelector('.globe-main');
+  var svg = $('radialLines');
+  var center = document.querySelector('.radial-center');
+  if (!container || !svg || !center) return;
+
+  var cRect = container.getBoundingClientRect();
+  var sRect = center.getBoundingClientRect();
+  // 球心坐标（相对于容器）
+  var cx = sRect.left + sRect.width / 2 - cRect.left;
+  var cy = sRect.top + sRect.height / 2 - cRect.top;
+  // 球体半径（用于线条起点）
+  var radius = sRect.width / 2;
+
+  svg.setAttribute('viewBox', '0 0 ' + cRect.width + ' ' + cRect.height);
+  svg.setAttribute('preserveAspectRatio', 'none');
+  svg.innerHTML = '';
+
+  // 定义渐变
+  var defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  defs.innerHTML = '<linearGradient id="lineGlow" x1="0%" y1="0%" x2="100%" y2="0%">' +
+    '<stop offset="0%" stop-color="#00d4ff" stop-opacity="0.7"/>' +
+    '<stop offset="100%" stop-color="#00d4ff" stop-opacity="0.15"/>' +
+    '</linearGradient>';
+  svg.appendChild(defs);
+
+  document.querySelectorAll('.radial-item').forEach(function(item) {
+    var r = item.getBoundingClientRect();
+    var ix, iy;
+    // 判断左侧还是右侧
+    if (r.left + r.width / 2 < cx) {
+      ix = r.right - cRect.left; // 左侧卡片右边缘
+    } else {
+      ix = r.left - cRect.left; // 右侧卡片左边缘
+    }
+    iy = r.top + r.height / 2 - cRect.top;
+
+    // 计算球体边缘上的起点（朝向卡片方向）
+    var dx = ix - cx, dy = iy - cy;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+    var sx = cx + (dx / dist) * radius;
+    var sy = cy + (dy / dist) * radius;
+
+    // 主线
+// 计算中间控制点 —— 让线自然弯曲
+var mx = (sx + ix) / 2;
+var my = (sy + iy) / 2;
+// 垂直于连线的偏移，制造弧度
+var dx = ix - sx, dy = iy - sy;
+var len = Math.sqrt(dx*dx + dy*dy) || 1;
+var nx = -dy/len, ny = dx/len; // 法线方向
+var bend = len * 0.18;          // 弯曲强度，越大越弯
+var cx1 = mx + nx * bend;
+var cy1 = my + ny * bend;
+
+// 路径：从球体边缘 → 控制点 → 卡片边缘
+var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+var d = 'M ' + sx + ' ' + sy + ' Q ' + cx1 + ' ' + cy1 + ' ' + ix + ' ' + iy;
+path.setAttribute('d', d);
+path.setAttribute('stroke', 'rgba(0,212,255,0.5)');
+path.setAttribute('stroke-width', '1.5');
+path.setAttribute('fill', 'none');
+path.setAttribute('stroke-dasharray', '6 4');
+path.setAttribute('stroke-linecap', 'round');
+svg.appendChild(path);
+
+// 发光层也改成 path
+var glow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+glow.setAttribute('d', d);
+glow.setAttribute('stroke', 'rgba(0,212,255,0.15)');
+glow.setAttribute('stroke-width', '4');
+glow.setAttribute('fill', 'none');
+glow.setAttribute('stroke-linecap', 'round');
+svg.insertBefore(glow, path);   
+
+   
+    // 球体边缘端点光点
+    var dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    dot.setAttribute('cx', sx);
+    dot.setAttribute('cy', sy);
+    dot.setAttribute('r', '3');
+    dot.setAttribute('fill', '#00d4ff');
+    dot.setAttribute('opacity', '0.8');
+    svg.appendChild(dot);
+  });
+}
+
+function renderMetrics(d) {
+  $('kpi-today').textContent = fmt(d.todayVisitors);
+  $('kpi-week').textContent = fmt(d.weekVisitors);
+  $('kpi-chats').textContent = fmt(d.totalChats);
+  $('kpi-sat').textContent = d.avgSatisfaction === null || d.avgSatisfaction === undefined ? '--' : d.avgSatisfaction;
+  $('kpi-trend').textContent = d.satisfactionRate === null || d.satisfactionRate === undefined ? '--' : d.satisfactionRate.toFixed(0);
+
+  // 更新放射状6个数据项
+  var ratio = d.serviceRatio || {};
+  setRadialMetric('stat-consult', ratio.consult, '%', 1);
+  setRadialMetric('stat-ticket', ratio.ticket, '%', 1);
+  setRadialMetric('stat-guide', ratio.guide, '%', 1);
+  setRadialMetric('stat-trend', d.satisfactionRate, '%', 1);
+  setRadialMetric('stat-sat', d.avgSatisfaction, '★', 1);
+
+  var tc = $('kpi-today-change');
+  if (tc) { tc.textContent = ''; tc.className = 'kpi-change'; }
+  var tcel = $('kpi-trend-change');
+  if (tcel && d.satisfactionRate !== null && d.satisfactionRate !== undefined) { tcel.textContent = ''; tcel.className = 'kpi-change'; }
+}
+
+function renderTrend(trend) {
+  if (!charts['chart-trend']) return;
+  var data = trend && trend.length ? trend : [];
+  charts['chart-trend'].clear();
+  if (!data.length) { charts['chart-trend'].setOption({title:{text:'暂无数据',left:'center',top:'middle',textStyle:{color:'#3d5a7a',fontSize:12}}}); return; }
+  charts['chart-trend'].setOption({
+    tooltip: { trigger: 'axis', backgroundColor: 'rgba(6,22,48,0.95)', borderColor: '#00d4ff', textStyle: { color: '#c8ddf0' } },
+  legend: [
+    {
+      data: ['对话次数'],
+      textStyle: { color: '#6a8bb0', fontSize: 11 },
+      top: 4,
+      left: 'center',          // ✅ 居中偏左
+      itemWidth: 12,
+      itemHeight: 8
+    },
+    {
+      data: ['满意度'],
+      textStyle: { color: '#ffd34d', fontSize: 11 },   // ✅ 金色，和折线对应
+      top: 4,
+      left: '60%',             // ✅ 往右移，不和"服务次数"挤在一起
+      itemWidth: 12,
+      itemHeight: 8
+    }
+  ],
+    grid: { left: 40, right: 40, top: 30, bottom: 28 },
+    xAxis: { type: 'category', data: data.map(function(d){return d.day;}), axisLine: { lineStyle: { color: 'rgba(0,212,255,0.2)' } }, axisLabel: { color: '#6a8bb0', fontSize: 11 }, axisTick: { show: false } },
+    yAxis: [
+      { type: 'value', name: '次数', axisLine: { show: false }, axisLabel: { color: '#6a8bb0', fontSize: 11 }, splitLine: { lineStyle: { color: 'rgba(0,212,255,0.08)' } } },
+      { type: 'value', name: '满意度', min: 0, max: 5, axisLine: { show: false }, axisLabel: { color: '#6a8bb0', fontSize: 11 }, splitLine: { show: false } }
+    ],
+    series: [
+      { name: '对话次数', type: 'bar', data: data.map(function(d){return d.count||0;}), barWidth: '40%', itemStyle: { borderRadius: [3,3,0,0], color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#00d4ff'},{offset:1,color:'rgba(0,212,255,0.2)'}]) } },
+      { name: '满意度', type: 'line', yAxisIndex: 1, data: data.map(function(d){return d.avgSatisfaction === null || d.avgSatisfaction === undefined ? null : d.avgSatisfaction;}), smooth: false, symbol: 'circle', symbolSize: 6, connectNulls: false, lineStyle: { color: '#ffd34d', width: 2 }, itemStyle: { color: '#ffd34d' }, areaStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(255,211,77,0.3)'},{offset:1,color:'rgba(255,211,77,0)'}]) } }
+    ]
+  });
+}
+
+function renderSentiment(s) {
+  if (!charts['chart-sentiment']) return;
+  var total = (s.positive||0)+(s.neutral||0)+(s.negative||0);
+  charts['chart-sentiment'].clear();
+  if (!total) { charts['chart-sentiment'].setOption({title:{text:'当前范围暂无对话数据',left:'center',top:'middle',textStyle:{color:'#3d5a7a',fontSize:12}}}); return; }
+  charts['chart-sentiment'].setOption({
+    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)', backgroundColor: 'rgba(6,22,48,0.95)', borderColor: '#00d4ff', textStyle: { color: '#c8ddf0' } },
+    legend: { orient: 'vertical', right: 10, top: 'center', textStyle: { color: '#c8ddf0', fontSize: 12 }, itemWidth: 10, itemHeight: 10, itemGap: 14 },
+    series: [
+      { type: 'pie', radius: ['45%','68%'], center: ['35%','50%'], avoidLabelOverlap: false, label: { show: false }, labelLine: { show: false }, itemStyle: { borderColor: 'rgba(0,212,255,0.3)', borderWidth: 2 },
+        data: [
+          { value: s.positive||0, name: '正向 '+((s.positive||0)/total*100).toFixed(1)+'%', itemStyle: { color: '#00ff88' } },
+          { value: s.neutral||0, name: '中性 '+((s.neutral||0)/total*100).toFixed(1)+'%', itemStyle: { color: '#00d4ff' } },
+          { value: s.negative||0, name: '负向 '+((s.negative||0)/total*100).toFixed(1)+'%', itemStyle: { color: '#ff6b9d' } }
+        ]
+      },
+      { type: 'pie', radius: ['0%','25%'], center: ['35%','50%'], silent: true, label: { show: true, position: 'center', formatter: total.toLocaleString()+'\n总计', color: '#00d4ff', fontSize: 14, fontWeight: 'bold' }, itemStyle: { color: 'transparent' }, data: [{ value: 1 }] }
+    ]
+  });
+}
+
+function renderHourly(hours) {
+  if (!charts['chart-hourly']) return;
+  var data = hours && hours.length ? hours : [];
+  charts['chart-hourly'].clear();
+  if (!data.length) { charts['chart-hourly'].setOption({title:{text:'暂无数据',left:'center',top:'middle',textStyle:{color:'#3d5a7a',fontSize:12}}}); return; }
+  charts['chart-hourly'].setOption({
+    tooltip: { trigger: 'axis', backgroundColor: 'rgba(6,22,48,0.95)', borderColor: '#00d4ff', textStyle: { color: '#c8ddf0' } },
+    grid: { left: 44, right: 12, top: 16, bottom: 22 },
+    xAxis: { type: 'category', data: data.map(function(d){return d.hour+':00';}), axisLine: { lineStyle: { color: 'rgba(0,212,255,0.2)' } }, axisLabel: { color: '#6a8bb0', fontSize: 10, interval: 1 }, axisTick: { show: false } },
+    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: '#6a8bb0', fontSize: 10 }, splitLine: { lineStyle: { color: 'rgba(0,212,255,0.08)' } } },
+    series: [{ type: 'line', data: data.map(function(d){return d.count||0;}), smooth: true, symbol: 'circle', symbolSize: 6, lineStyle: { color: '#00d4ff', width: 2 }, itemStyle: { color: '#00d4ff', borderColor: '#fff', borderWidth: 2 }, areaStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(0,212,255,0.4)'},{offset:1,color:'rgba(0,212,255,0)'}]) } }]
+  });
+}
+
+function renderProfiles(profiles) {
+  if (!charts['chart-profiles']) return;
+  var map = { history:'历史人文', nature:'自然风光', family:'亲子休闲', relax:'静心祈福' };
+  var data = Object.entries(profiles||{}).map(function(e){ return { name: map[e[0]]||e[0], value: e[1].count||0, sat: e[1].avgSatisfaction||0 }; }).filter(function(d){return d.value>0;});
+  charts['chart-profiles'].clear();
+  if (!data.length) { charts['chart-profiles'].setOption({title:{text:'暂无数据',left:'center',top:'middle',textStyle:{color:'#3d5a7a',fontSize:12}}}); return; }
+  charts['chart-profiles'].setOption({
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, backgroundColor: 'rgba(6,22,48,0.95)', borderColor: '#00d4ff', textStyle: { color: '#c8ddf0' } },
+    grid: { left: 80, right: 60, top: 8, bottom: 12 },
+    xAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: '#6a8bb0', fontSize: 10 }, splitLine: { lineStyle: { color: 'rgba(0,212,255,0.08)' } } },
+    yAxis: { type: 'category', data: data.map(function(d){return d.name;}), axisLine: { lineStyle: { color: 'rgba(0,212,255,0.2)' } }, axisLabel: { color: '#c8ddf0', fontSize: 12 }, axisTick: { show: false } },
+   series: [{ type: 'bar', data: data.map(function(d){return d.value;}), barWidth: '50%', itemStyle: { borderRadius: [0,4,4,0], color: new echarts.graphic.LinearGradient(0,0,1,0,[{offset:0,color:'rgba(0,212,255,0.3)'},{offset:1,color:'#00d4ff'}]) }, label: { show: true, position: 'right', formatter: function(p){return data[p.dataIndex].value+'次对话  '+(data[p.dataIndex].sat?data[p.dataIndex].sat.toFixed(1)+'★':'');}, color: '#6a8bb0', fontSize: 11 } }]
+  });
+}
+
+function renderTopicRank(topics) {
+  var el = $('rank-topics'); if (!el) return;
+  var data = (topics||[]).slice().sort(function(a,b){return b.value-a.value;}).slice(0,3);
+  if (!data.length) { el.innerHTML = '<div style="color:#3d5a7a;font-size:12px;text-align:center;padding:20px">当前范围暂无话题数据</div>'; return; }
+  var max = data[0].value || 1;
+  var colors = ['#ff6b6b','#ffa94d','#ffd43b','#38d9a9','#38d9a9'];
+  el.innerHTML = data.map(function(d,i){ return '<div class="rank-item"><div class="rank-no">'+(i+1)+'</div><div style="flex:1;display:flex;align-items:center;gap:10px"><div class="rank-name">'+d.name+'</div><div class="rank-bar" style="flex:1"><div class="rank-bar-fill" style="width:'+(d.value/max*100)+'%;background:linear-gradient(90deg,'+colors[i]+',rgba(0,212,255,0.6))"></div></div></div><div class="rank-count">'+d.value.toLocaleString()+'</div></div>'; }).join('');
+}
+
+function renderSpotRank(spots) {
+  var el = $('rank-spots'); if (!el) return;
+  var data = (spots||[]).filter(function(d){return (d.mentions||0)>0;}).slice().sort(function(a,b){return b.mentions-a.mentions;}).slice(0,3);
+  if (!data.length) { el.innerHTML = '<div style="color:#3d5a7a;font-size:12px;text-align:center;padding:20px">暂无景点提及数据</div>'; return; }
+  var max = data[0].mentions || 1;
+  var colors = ['#ff6b6b','#ffa94d','#ffd43b','#38d9a9','#38d9a9'];
+  el.innerHTML = data.map(function(d,i){ var pct = max>0?(d.mentions/max*100).toFixed(1):0; return '<div class="rank-item"><div class="rank-no">'+(i+1)+'</div><div style="flex:1;display:flex;align-items:center;gap:10px"><div class="rank-name">'+d.spot+'</div><div class="rank-bar" style="flex:1"><div class="rank-bar-fill" style="width:'+pct+'%;background:linear-gradient(90deg,'+colors[i]+',rgba(0,212,255,0.6))"></div></div></div><div class="rank-count">'+fmt(d.mentions)+'次</div><div class="rank-pct">'+pct+'%</div></div>'; }).join('');
+}
+
+function renderFeedback(items) {
+  items = items || [];
+  var el = $('feedback-list'); if (!el) return;
+  if (!items.length) { el.innerHTML = '<div style="color:#3d5a7a;font-size:12px;text-align:center;padding:20px">暂无反馈数据</div>'; return; }
+  el.innerHTML = items.slice(0, 20).map(function(item){
+    var s = item.satisfaction || 0;
+    var stars = '★'.repeat(s) + '☆'.repeat(5-s);
+    var text = (item.message || item.reply || '').replace(/[<>]/g, '').slice(0, 60);
+    var time = item.timestamp ? item.timestamp.slice(5, 16) : '';
+    return '<div class="feedback-item"><span class="feedback-stars">'+stars+'</span><span class="feedback-text">'+text+'</span><span class="feedback-time">'+time+'</span></div>';
+  }).join('');
+  startFeedbackScroll();
+}
+
+function startFeedbackScroll() {
+  if (feedbackTimer) { clearInterval(feedbackTimer); feedbackTimer = null; }
+  var scroll = $('feedback-scroll'); var list = $('feedback-list');
+  if (!scroll || !list) return;
+  var pos = 0; var paused = false;
+  scroll.addEventListener('mouseenter', function(){ paused = true; });
+  scroll.addEventListener('mouseleave', function(){ paused = false; });
+  feedbackTimer = setInterval(function() {
+    if (paused) return;
+    pos += 0.5;
+    if (pos >= list.scrollHeight - scroll.clientHeight) pos = 0;
+    scroll.scrollTop = pos;
+  }, 50);
+}
+
+async function loadData() {
+  try {
+    var r = await authFetch(API + '/overview');
+    if (!r) return;
+    var j = await r.json();
+    if (j.code === 0) {
+      renderMetrics(j.data);
+      renderTrend(j.data.trend || []);
+      renderSentiment(j.data.sentiment || {});
+      renderTopicRank(j.data.topicFocus || []);
+    }
+  } catch(e) { console.error('overview', e); }
+
+  try {
+    var r2 = await authFetch(API + '/deep');
+    if (!r2) return;
+    var j2 = await r2.json();
+    if (j2.code === 0) {
+      renderHourly(j2.data.hourlyDistribution || []);
+      renderProfiles(j2.data.visitorProfiles || {});
+      renderSpotRank(j2.data.spotHeatmap || []);
+      if (!j2.data.topicFocus) renderTopicRank(j2.data.topicRanking || []);
+    }
+  } catch(e) { console.error('deep', e); }
+
+  try {
+    var r3 = await authFetch(API + '/feedback');
+    if (!r3) return;
+    var j3 = await r3.json();
+    if (j3.code === 0) renderFeedback(j3.data || []);
+  } catch(e) { console.error('feedback', e); }
+}
+
+tickTime(); setInterval(tickTime, 1000);
+initCharts();
+initGlobeDecor();
+drawRadialLines();
+loadData();
+setInterval(loadData, 30000);
+window.addEventListener('resize', function(){ resizeCharts(); drawRadialLines(); });
+</script>
+</body>
+</html>

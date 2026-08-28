@@ -1,0 +1,122 @@
+[
+  {
+    "id": "history",
+    "interest": "history",
+    "name": "文化深度线",
+    "duration": "3.5小时",
+    "suitableFor": [
+      "历史文化",
+      "首次到访",
+      "深度讲解"
+    ],
+    "stops": [
+      {
+        "name": "灵山广场",
+        "highlight": "开场导览、景区全景认知"
+      },
+      {
+        "name": "灵山大佛",
+        "highlight": "地标讲解与文化故事"
+      },
+      {
+        "name": "梵宫",
+        "highlight": "建筑艺术与沉浸式空间体验"
+      },
+      {
+        "name": "五印坛城",
+        "highlight": "延展性文化讲解"
+      }
+    ],
+    "pitch": "适合喜欢历史、建筑和文化背景的游客，讲解层次更完整。"
+  },
+  {
+    "id": "nature",
+    "interest": "nature",
+    "name": "山水治愈线",
+    "duration": "2.5小时",
+    "suitableFor": [
+      "自然风光",
+      "轻徒步",
+      "拍照打卡"
+    ],
+    "stops": [
+      {
+        "name": "灵山广场",
+        "highlight": "景观视角打开"
+      },
+      {
+        "name": "九龙灌浴",
+        "highlight": "动态演艺和环境氛围"
+      },
+      {
+        "name": "湖景步道",
+        "highlight": "自然风景与慢节奏休憩"
+      },
+      {
+        "name": "观景平台",
+        "highlight": "推荐拍照位"
+      }
+    ],
+    "pitch": "更强调风景、演艺与松弛感，适合想轻松逛景区的游客。"
+  },
+  {
+    "id": "family",
+    "interest": "family",
+    "name": "亲子互动线",
+    "duration": "3小时",
+    "suitableFor": [
+      "亲子游客",
+      "互动体验",
+      "节奏舒适"
+    ],
+    "stops": [
+      {
+        "name": "游客中心",
+        "highlight": "行程说明与便利设施提示"
+      },
+      {
+        "name": "九龙灌浴",
+        "highlight": "高互动演艺节点"
+      },
+      {
+        "name": "梵宫",
+        "highlight": "沉浸式视觉体验"
+      },
+      {
+        "name": "休闲补给区",
+        "highlight": "休息与二次分流"
+      }
+    ],
+    "pitch": "减少折返，兼顾演艺、休息和趣味讲解，适合家庭同行。"
+  },
+  {
+    "id": "relax",
+    "interest": "relax",
+    "name": "舒缓漫游线",
+    "duration": "2小时",
+    "suitableFor": [
+      "轻松游",
+      "银发游客",
+      "低强度行程"
+    ],
+    "stops": [
+      {
+        "name": "游客中心",
+        "highlight": "低门槛导览启动"
+      },
+      {
+        "name": "灵山大佛",
+        "highlight": "核心地标轻讲解"
+      },
+      {
+        "name": "静心休憩区",
+        "highlight": "休息与情绪互动"
+      },
+      {
+        "name": "文化商店",
+        "highlight": "轻消费与返程建议"
+      }
+    ],
+    "pitch": "适合时间有限或希望舒适游览的游客，路线短、节奏平稳。"
+  }
+]

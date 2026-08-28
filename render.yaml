@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: ai-digital-human-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: APP_ENV
+        value: production
+      # Set these in Render; no built-in admin credentials are permitted in production.
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      # Comma-separated browser origins, for example the deployed GitHub Pages origin.
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: LLM_PROVIDER
+        value: deepseek
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: SILICONFLOW_API_KEY
+        sync: false
+      - key: AMAP_API_KEY
+        sync: false
+      - key: XUNFEI_APP_ID
+        sync: false
+      - key: XUNFEI_API_KEY
+        sync: false
+      - key: XUNFEI_API_SECRET
+        sync: false
+
+# This Blueprint deliberately does not attach a persistent disk or select a trial plan.
+# SQLite data and generated files are therefore ephemeral across redeploys/restarts; add
+# a managed database and persistent storage before relying on production persistence.

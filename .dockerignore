@@ -1,0 +1,44 @@
+# Secrets and repository metadata
+.git/
+.github/
+.env
+.env.*
+.venv/
+*.key
+*.pem
+*.crt
+*.p12
+*.zip
+
+# Generated output and caches
+outputs/
+.tmp/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+backend/chroma_db/
+backend/static/audio/
+# Keep the tracked JSON seed/config exports in backend/admin_data/ available
+# to the image; exclude only the generated SQLite runtime files.
+backend/admin_data/scenic.db
+backend/admin_data/scenic.db-*
+backend/admin_data/*.corrupt-*
+backend/admin_data/conversations.json
+backend/admin_data/settings.json
+*.db
+*.db-shm
+*.db-wal
+*.log
+
+# Non-runtime reference, test, and development material
+SentiAvatar-main/
+emotion-resonate-main/
+Open-LLM-VTuber-main/
+live2d-models/
+tests/
+test_report_assets/
+tools/
+.vscode/
+.vs/
+.idea/
+

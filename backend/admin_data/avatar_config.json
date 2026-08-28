@@ -1,0 +1,14 @@
+{
+  "theme": "灵山文化",
+  "activeProfile": "xiaoling",
+  "profiles": [
+    {
+      "id": "xiaoling",
+      "name": "小灵",
+      "style": "亲和讲解员",
+      "voice": "温柔女声",
+      "outfit": "新中式导览服",
+      "expressionBias": "warm"
+    }
+  ]
+}

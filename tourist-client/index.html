@@ -1,0 +1,2142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <title>灵山胜境 AI 数字人导览系统</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+    <style> 
+        .vrm-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .vrm-controls button {
+            padding: 4px 9px;
+            background: rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(139, 109, 80, 0.12);
+            border-radius: 999px;
+            color: #6b5e50;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .vrm-controls button:hover {
+            border-color: #b8923a;
+            color: #b8923a;
+        }
+
+        #vrm-canvas {
+            position: absolute;
+            inset: 0;
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #loading {
+            color: #6d5438;
+            font-size: 12px;
+            text-align: center;
+            z-index: 2;
+            padding: 8px 12px;
+            border-radius: 12px;
+            background: rgba(232, 226, 216, 0.92);
+            max-width: 90%;
+            line-height: 1.5;
+        }
+         /* ===== 表情调试面板 ===== */
+
+    .expression-section {
+        margin-top: 16px;
+    }
+
+    .expression-sliders {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .expression-sliders label {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        color: #6b5e50;
+        font-size: 12px;
+    }
+
+    .expression-sliders input {
+        width: 100%;
+    }
+    </style>
+</head>
+<body>
+    <!-- 浮动金色光粒 -->
+    <div class="dharma-particles" id="dharma-particles"></div>
+
+    <!-- 莲花瓣飘落 -->
+    <div class="lotus-petals" aria-hidden="true">
+        <svg class="petal petal-1" viewBox="0 0 30 40" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 2 Q25 12 23 28 Q21 36 15 38 Q9 36 7 28 Q5 12 15 2Z" fill="rgba(184,146,58,0.12)" stroke="rgba(184,146,58,0.25)" stroke-width="0.6"/>
+            <path d="M15 6 Q15 20 15 34" stroke="rgba(184,146,58,0.10)" stroke-width="0.4" fill="none"/>
+        </svg>
+        <svg class="petal petal-2" viewBox="0 0 30 40" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 2 Q25 12 23 28 Q21 36 15 38 Q9 36 7 28 Q5 12 15 2Z" fill="rgba(201,168,76,0.10)" stroke="rgba(201,168,76,0.22)" stroke-width="0.6"/>
+            <path d="M15 6 Q15 20 15 34" stroke="rgba(201,168,76,0.08)" stroke-width="0.4" fill="none"/>
+        </svg>
+        <svg class="petal petal-3" viewBox="0 0 30 40" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 2 Q25 12 23 28 Q21 36 15 38 Q9 36 7 28 Q5 12 15 2Z" fill="rgba(184,146,58,0.08)" stroke="rgba(184,146,58,0.18)" stroke-width="0.6"/>
+        </svg>
+        <svg class="petal petal-4" viewBox="0 0 30 40" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 2 Q25 12 23 28 Q21 36 15 38 Q9 36 7 28 Q5 12 15 2Z" fill="rgba(201,168,76,0.07)" stroke="rgba(201,168,76,0.16)" stroke-width="0.6"/>
+        </svg>
+        <svg class="petal petal-5" viewBox="0 0 30 40" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 2 Q25 12 23 28 Q21 36 15 38 Q9 36 7 28 Q5 12 15 2Z" fill="rgba(184,146,58,0.09)" stroke="rgba(184,146,58,0.20)" stroke-width="0.6"/>
+        </svg>
+    </div>
+
+    <!-- 薄雾层 -->
+    <div class="mist-overlay" aria-hidden="true">
+        <div class="mist-wisp"></div>
+        <div class="mist-wisp"></div>
+    </div>
+
+    <!-- 远山剪影 -->
+    <div class="mountain-silhouette" aria-hidden="true">
+        <svg viewBox="0 0 1440 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+            <path d="M0 200 L0 160 Q80 120 160 140 Q240 90 320 110 Q400 60 480 95 Q560 50 640 80 Q720 40 800 70 Q880 55 960 90 Q1040 65 1120 85 Q1200 50 1280 75 Q1360 60 1440 80 L1440 200Z" fill="rgba(107,143,122,0.04)"/>
+            <path d="M0 200 L0 170 Q120 140 240 155 Q360 110 480 130 Q600 90 720 115 Q840 80 960 105 Q1080 85 1200 100 Q1320 75 1440 95 L1440 200Z" fill="rgba(107,143,122,0.025)"/>
+        </svg>
+    </div>
+
+    <!-- 祥云纹背景 -->
+    <div class="cloud-pattern">
+        <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <defs>
+                <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="rgba(184,146,58,0.03)"/>
+                    <stop offset="100%" stop-color="rgba(184,146,58,0.15)"/>
+                </linearGradient>
+            </defs>
+            <g fill="none" stroke="rgba(184,146,58,0.18)" stroke-width="0.8">
+                <!-- 祥云 1 - 左上 -->
+                <path d="M80 120 Q90 100 110 105 Q125 95 140 105 Q155 95 170 105 Q185 100 190 120 Q185 135 170 130 Q155 140 140 130 Q125 140 110 130 Q90 140 80 120Z"/>
+                <path d="M70 125 Q80 110 100 112 Q110 108 120 115 Q130 105 145 112 Q155 108 160 120 Q155 130 145 127 Q130 135 120 128 Q110 135 100 127 Q80 132 70 125Z" stroke="rgba(184,146,58,0.08)" stroke-width="0.5"/>
+                <!-- 祥云 2 - 右上 -->
+                <path d="M950 80 Q960 60 980 65 Q995 55 1010 65 Q1025 55 1040 65 Q1055 60 1060 80 Q1055 95 1040 90 Q1025 100 1010 90 Q995 100 980 90 Q960 100 950 80Z"/>
+                <path d="M940 85 Q950 70 970 75 Q980 68 990 76 Q1005 68 1018 75 Q1030 70 1038 82 Q1030 95 1018 90 Q1005 100 990 92 Q978 100 968 92 Q950 96 940 85Z" stroke="rgba(184,146,58,0.08)" stroke-width="0.5"/>
+                <!-- 祥云 3 - 左下 -->
+                <path d="M200 650 Q210 630 230 635 Q245 625 260 635 Q275 630 280 650 Q275 665 260 660 Q245 670 230 660 Q210 670 200 650Z"/>
+                <path d="M190 655 Q200 640 220 643 Q235 636 248 643 Q260 638 268 650 Q260 662 248 658 Q235 668 220 658 Q205 665 190 655Z" stroke="rgba(184,146,58,0.08)" stroke-width="0.5"/>
+                <!-- 祥云 4 - 右下 -->
+                <path d="M1050 550 Q1060 530 1080 535 Q1095 525 1110 535 Q1125 530 1130 550 Q1125 565 1110 560 Q1095 570 1080 560 Q1060 570 1050 550Z"/>
+                <!-- 祥云 5 - 左侧中部 -->
+                <path d="M30 340 Q38 320 55 325 Q68 315 80 325 Q92 318 100 335 Q92 348 80 343 Q68 352 55 343 Q38 350 30 340Z"/>
+                <!-- 祥云 6 - 右侧中部 -->
+                <path d="M1120 300 Q1128 280 1145 285 Q1158 275 1170 285 Q1182 278 1190 295 Q1182 308 1170 303 Q1158 312 1145 303 Q1128 310 1120 300Z"/>
+                <!-- 祥云 7 - 中间偏上 -->
+                <path d="M550 180 Q558 162 572 167 Q584 158 596 167 Q608 160 615 176 Q608 190 596 185 Q584 194 572 185 Q558 192 550 180Z"/>
+                <!-- 祥云 8 - 中间偏下 -->
+                <path d="M620 520 Q628 502 642 507 Q654 498 666 507 Q678 500 685 516 Q678 530 666 525 Q654 534 642 525 Q628 532 620 520Z"/>
+            </g>
+            <!-- 顶部淡金渐变 -->
+            <rect x="0" y="0" width="1200" height="100" fill="url(#cg)" opacity="0.4"/>
+        </svg>
+    </div>
+
+    <!-- ===== 电影感叙事章节 (AIDA) ===== -->
+    <div class="story-container story-static" id="story-container">
+        <!-- HERO: Attention -->
+        <section class="story-section story-hero" data-gsap="hero">
+            <svg class="hero-lotus" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M32 6Q36 16 32 24Q28 16 32 6Z" fill="rgba(184,146,58,0.25)" stroke="rgba(184,146,58,0.5)" stroke-width="0.8"/>
+                    <path d="M20 10Q26 14 28 20Q23 16 20 10Z" fill="rgba(184,146,58,0.15)" stroke="rgba(184,146,58,0.35)" stroke-width="0.6"/>
+                    <path d="M44 10Q38 14 36 20Q41 16 44 10Z" fill="rgba(184,146,58,0.15)" stroke="rgba(184,146,58,0.35)" stroke-width="0.6"/>
+                    <path d="M12 18Q18 18 20 22Q16 20 12 18Z" fill="rgba(184,146,58,0.08)" stroke="rgba(184,146,58,0.2)" stroke-width="0.5"/>
+                    <path d="M52 18Q46 18 44 22Q48 20 52 18Z" fill="rgba(184,146,58,0.08)" stroke="rgba(184,146,58,0.2)" stroke-width="0.5"/>
+                    <path d="M32 24Q30 32 32 38" stroke="rgba(107,143,122,0.3)" stroke-width="0.8"/>
+                    <circle cx="32" cy="26" r="2.5" fill="rgba(184,146,58,0.3)" stroke="rgba(184,146,58,0.5)" stroke-width="0.5"/>
+                </g>
+            </svg>
+            <h1 class="hero-title">灵山胜境</h1>
+            <p class="hero-sub">AI 数字人导览 · 智慧文旅</p>
+            <button class="meet-btn hero-start-btn" id="start-btn" type="button">
+                <span>开始体验</span>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <div class="hero-scroll-hint">
+                <span>向下探索</span>
+                <div class="scroll-arrow"></div>
+            </div>
+        </section>
+
+        <!-- CHAPTER 1: Interest — 横向视差画廊 -->
+        <section class="story-section story-chapter" data-gsap="chapter1">
+            <span class="chapter-label">寻幽探胜</span>
+            <h2 class="chapter-headline">千年灵山，一步一景</h2>
+            <p class="chapter-desc">从大佛到梵宫，每一处都藏着故事</p>
+            <div class="horizontal-scroll-wrap">
+                <div class="horizontal-scroll-track" id="scroll-track">
+                    <div class="horiz-scene">
+                        <svg class="horiz-scene-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                            <g fill="none" stroke="rgba(184,146,58,0.5)" stroke-width="1.2" stroke-linecap="round">
+                                <circle cx="24" cy="16" r="8"/>
+                                <path d="M24 24v8M20 28h8"/>
+                                <path d="M14 38c0-6 4-10 10-10s10 4 10 10"/>
+                                <circle cx="24" cy="16" r="10" stroke="rgba(184,146,58,0.2)" stroke-width="0.8"/>
+                            </g>
+                        </svg>
+                        <h3>灵山大佛</h3>
+                        <p>88 米高青铜大佛，远眺太湖，气势恢宏</p>
+                    </div>
+                    <div class="horiz-scene">
+                        <svg class="horiz-scene-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                            <g fill="none" stroke="rgba(184,146,58,0.5)" stroke-width="1.2" stroke-linecap="round">
+                                <path d="M12 8h24l4 6v28H8V14l4-6Z"/>
+                                <path d="M8 20h32M20 8v10"/>
+                                <path d="M18 32l4-4 4 4 4-4"/>
+                                <path d="M14 36h20"/>
+                            </g>
+                        </svg>
+                        <h3>梵宫</h3>
+                        <p>佛教艺术殿堂，汇聚千年工艺精华</p>
+                    </div>
+                    <div class="horiz-scene">
+                        <svg class="horiz-scene-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                            <g fill="none" stroke="rgba(184,146,58,0.5)" stroke-width="1.2" stroke-linecap="round">
+                                <path d="M24 6v6M24 36v6"/>
+                                <path d="M14 14l4 4M30 30l4 4"/>
+                                <path d="M8 24h6M34 24h6"/>
+                                <path d="M14 34l4-4M30 18l4-4"/>
+                                <circle cx="24" cy="24" r="6"/>
+                                <circle cx="24" cy="24" r="14" stroke="rgba(184,146,58,0.2)" stroke-width="0.8"/>
+                            </g>
+                        </svg>
+                        <h3>九龙灌浴</h3>
+                        <p>动态音乐群雕，演绎佛诞盛景</p>
+                    </div>
+                    <div class="horiz-scene">
+                        <svg class="horiz-scene-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                            <g fill="none" stroke="rgba(184,146,58,0.5)" stroke-width="1.2" stroke-linecap="round">
+                                <path d="M24 8L28 18h10l-8 6 3 10-9-6-9 6 3-10-8-6h10Z"/>
+                                <circle cx="24" cy="24" r="14" stroke="rgba(184,146,58,0.2)" stroke-width="0.8"/>
+                            </g>
+                        </svg>
+                        <h3>曼飞龙塔</h3>
+                        <p>南传佛教风格，异域风情独具</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CHAPTER 2: Desire — Bento Grid -->
+        <section class="story-section story-chapter" data-gsap="chapter2">
+            <span class="chapter-label">智慧导览</span>
+            <h2 class="chapter-headline">每一程，都懂你</h2>
+            <p class="chapter-desc">AI 驱动，懂文化更懂你</p>
+            <div class="bento-grid">
+                <div class="bento-card">
+                    <svg class="bento-icon" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                        <g fill="none" stroke="rgba(184,146,58,0.5)" stroke-width="1.2" stroke-linecap="round">
+                            <path d="M4 6h24v16H12l-6 5v-5H4V6Z"/>
+                            <path d="M12 12h10M12 17h7"/>
+                        </g>
+                    </svg>
+                    <h4>AI 问答</h4>
+                    <p>景区知识库即时应答，深度讲解</p>
+                </div>
+                <div class="bento-card">
+                    <svg class="bento-icon" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                        <g fill="none" stroke="rgba(184,146,58,0.5)" stroke-width="1.2" stroke-linecap="round">
+                            <path d="M16 4l12 8v12H4V12l12-8Z"/>
+                            <path d="M10 16l4 4 8-8"/>
+                        </g>
+                    </svg>
+                    <h4>个性路线</h4>
+                    <p>根据偏好定制专属游览方案</p>
+                </div>
+                <div class="bento-card">
+                    <svg class="bento-icon" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                        <g fill="none" stroke="rgba(184,146,58,0.5)" stroke-width="1.2" stroke-linecap="round">
+                            <circle cx="16" cy="16" r="12"/>
+                            <path d="M16 8v8l5 3"/>
+                            <path d="M4 16h4M24 16h4M16 4v4M16 24v4"/>
+                        </g>
+                    </svg>
+                    <h4>实时地图</h4>
+                    <p>景区导览定位一目了然</p>
+                </div>
+                <div class="bento-card">
+                    <svg class="bento-icon" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                        <g fill="none" stroke="rgba(184,146,58,0.5)" stroke-width="1.2" stroke-linecap="round">
+                            <path d="M16 4v12l-5 5M16 16l5 5"/>
+                            <path d="M6 10a14 14 0 1 0 20 0"/>
+                            <circle cx="16" cy="10" r="2"/>
+                        </g>
+                    </svg>
+                    <h4>语音交互</h4>
+                    <p>语音对话解放双手</p>
+                </div>
+                <div class="bento-card span-2">
+                    <svg class="bento-icon" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                        <g fill="none" stroke="rgba(184,146,58,0.5)" stroke-width="1.2" stroke-linecap="round">
+                            <circle cx="16" cy="12" r="6"/>
+                            <path d="M8 28c0-6 4-10 8-10s8 4 8 10"/>
+                            <circle cx="16" cy="28" r="2" fill="rgba(184,146,58,0.1)"/>
+                            <path d="M16 6V2M10 8l-3-3M22 8l3-3"/>
+                        </g>
+                    </svg>
+                    <h4>3D 数字人</h4>
+                    <p>高精度 VRM 虚拟人实时驱动，表情动作自然生动</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- MEET: Action -->
+        <section class="story-section story-meet" data-gsap="meet">
+            <div class="meet-avatar-wrap">
+                <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="32" cy="32" r="30" fill="rgba(184,146,58,0.06)" stroke="rgba(184,146,58,0.15)" stroke-width="1"/>
+                    <circle cx="32" cy="22" r="9" fill="rgba(184,146,58,0.10)" stroke="rgba(184,146,58,0.2)" stroke-width="0.8"/>
+                    <path d="M18 50Q18 38 32 38Q46 38 46 50" fill="rgba(184,146,58,0.06)" stroke="rgba(184,146,58,0.15)" stroke-width="0.8"/>
+                    <path d="M26 20l-4 2M38 20l4 2" stroke="rgba(184,146,58,0.25)" stroke-width="1.2" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <h2 class="meet-title">遇见"小灵"</h2>
+            <p class="meet-desc">您的专属 AI 数字导游，已准备好带您探索灵山胜境</p>
+            <button class="meet-btn" id="start-btn-legacy">
+                <span>开始体验</span>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </section>
+    </div>
+
+    <div class="app-container" id="app-container" style="display:none">
+        <header class="top-nav">
+            <div class="nav-brand-centered">
+                <!-- 莲花图标 -->
+                <svg class="lotus-icon" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="width:28px;height:28px;flex-shrink:0;">
+                    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <!-- 中心莲瓣 -->
+                        <path d="M16 6 Q18 12 16 18 Q14 12 16 6Z" fill="rgba(184,146,58,0.25)" stroke="rgba(184,146,58,0.5)" stroke-width="0.8"/>
+                        <!-- 左莲瓣 -->
+                        <path d="M8 10 Q12 13 14 18 Q10 15 8 10Z" fill="rgba(184,146,58,0.15)" stroke="rgba(184,146,58,0.35)" stroke-width="0.6"/>
+                        <!-- 右莲瓣 -->
+                        <path d="M24 10 Q20 13 18 18 Q22 15 24 10Z" fill="rgba(184,146,58,0.15)" stroke="rgba(184,146,58,0.35)" stroke-width="0.6"/>
+                        <!-- 远左莲瓣 -->
+                        <path d="M4 14 Q9 14 12 18 Q8 16 4 14Z" fill="rgba(184,146,58,0.08)" stroke="rgba(184,146,58,0.2)" stroke-width="0.5"/>
+                        <!-- 远右莲瓣 -->
+                        <path d="M28 14 Q23 14 20 18 Q24 16 28 14Z" fill="rgba(184,146,58,0.08)" stroke="rgba(184,146,58,0.2)" stroke-width="0.5"/>
+                        <!-- 花蕊 -->
+                        <circle cx="16" cy="17" r="2" fill="rgba(184,146,58,0.3)" stroke="rgba(184,146,58,0.5)" stroke-width="0.5"/>
+                        <!-- 莲茎 -->
+                        <path d="M16 18 Q15 24 16 28" stroke="rgba(90,138,106,0.3)" stroke-width="0.8" fill="none"/>
+                        <!-- 莲叶 -->
+                        <path d="M10 26 Q13 24 16 26 Q19 24 22 26" stroke="rgba(90,138,106,0.2)" stroke-width="0.6" fill="none"/>
+                    </g>
+                </svg>
+                <h1>灵山胜境智慧景区</h1>
+            </div>
+            <nav class="nav-links" style="display:none">
+                <a id="admin-link" href="/admin" class="nav-link">管理后台</a>
+            </nav>
+        </header>
+
+        <main class="main-content">
+            <section class="brief-panel" id="brief-panel">
+                <!-- 莲花装饰 -->
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;margin-right:8px;opacity:0.3;flex-shrink:0;">
+                    <g fill="none" stroke-linecap="round">
+                        <path d="M12 3 Q14 8 12 13 Q10 8 12 3Z" fill="rgba(184,146,58,0.2)" stroke="rgba(184,146,58,0.4)" stroke-width="0.6"/>
+                        <path d="M6 7 Q9 9 11 13 Q8 10 6 7Z" fill="rgba(184,146,58,0.12)" stroke="rgba(184,146,58,0.25)" stroke-width="0.5"/>
+                        <path d="M18 7 Q15 9 13 13 Q16 10 18 7Z" fill="rgba(184,146,58,0.12)" stroke="rgba(184,146,58,0.25)" stroke-width="0.5"/>
+                        <circle cx="12" cy="12" r="1.5" fill="rgba(184,146,58,0.25)"/>
+                    </g>
+                </svg>
+                <h3 id="brief-name">灵山胜境 AI 数字人导览系统</h3>
+            </section>
+
+            <aside class="left-panel">
+                <section class="avatar-section">
+                    <div class="avatar-stage" id="vrm-stage">
+                        <button class="ghost-btn speaker-toggle active" id="speak-toggle" type="button" aria-label="切换播报状态" title="播报开">
+                            <svg class="speaker-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/>
+                                <path class="speaker-wave" d="M16 8.5a4 4 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                                <path class="speaker-wave" d="M18.5 6a7.5 7.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                            </svg>
+                        </button>
+                        <!-- 佛光轮装饰 -->
+                        <svg class="dharma-wheel-decor" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:12px;right:12px;width:48px;height:48px;opacity:0.12;pointer-events:none;z-index:1;">
+                            <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(184,146,58,0.5)" stroke-width="1.5"/>
+                            <circle cx="60" cy="60" r="8" fill="none" stroke="rgba(184,146,58,0.4)" stroke-width="1"/>
+                            <circle cx="60" cy="60" r="28" fill="none" stroke="rgba(184,146,58,0.25)" stroke-width="0.8"/>
+                            <!-- 8辐条 -->
+                            <line x1="60" y1="6" x2="60" y2="32" stroke="rgba(184,146,58,0.35)" stroke-width="1"/>
+                            <line x1="60" y1="88" x2="60" y2="114" stroke="rgba(184,146,58,0.35)" stroke-width="1"/>
+                            <line x1="6" y1="60" x2="32" y2="60" stroke="rgba(184,146,58,0.35)" stroke-width="1"/>
+                            <line x1="88" y1="60" x2="114" y2="60" stroke="rgba(184,146,58,0.35)" stroke-width="1"/>
+                            <line x1="18" y1="18" x2="36" y2="36" stroke="rgba(184,146,58,0.3)" stroke-width="0.8"/>
+                            <line x1="84" y1="84" x2="102" y2="102" stroke="rgba(184,146,58,0.3)" stroke-width="0.8"/>
+                            <line x1="102" y1="18" x2="84" y2="36" stroke="rgba(184,146,58,0.3)" stroke-width="0.8"/>
+                            <line x1="18" y1="102" x2="36" y2="84" stroke="rgba(184,146,58,0.3)" stroke-width="0.8"/>
+                            <!-- 莲瓣装饰 -->
+                            <g fill="rgba(184,146,58,0.08)" stroke="none">
+                                <ellipse cx="60" cy="8" rx="6" ry="3" transform="rotate(0 60 60)"/>
+                                <ellipse cx="60" cy="8" rx="6" ry="3" transform="rotate(45 60 60)"/>
+                                <ellipse cx="60" cy="8" rx="6" ry="3" transform="rotate(90 60 60)"/>
+                                <ellipse cx="60" cy="8" rx="6" ry="3" transform="rotate(135 60 60)"/>
+                                <ellipse cx="60" cy="8" rx="6" ry="3" transform="rotate(180 60 60)"/>
+                                <ellipse cx="60" cy="8" rx="6" ry="3" transform="rotate(225 60 60)"/>
+                                <ellipse cx="60" cy="8" rx="6" ry="3" transform="rotate(270 60 60)"/>
+                                <ellipse cx="60" cy="8" rx="6" ry="3" transform="rotate(315 60 60)"/>
+                            </g>
+                        </svg>
+                        <!-- 佛光放射线 -->
+                        <div class="halo-rays"></div>
+                        <!-- 同心圆扩散光环 -->
+                        <div class="halo-ripples">
+                            <div class="ripple ripple-1"></div>
+                            <div class="ripple ripple-2"></div>
+                            <div class="ripple ripple-3"></div>
+                        </div>
+                        <!-- 莲花座 -->
+                        <svg class="lotus-throne" viewBox="0 0 200 40" xmlns="http://www.w3.org/2000/svg">
+                            <g fill="none" stroke-linecap="round">
+                                <path d="M100 38 Q85 30 75 18 Q80 28 100 32 Q120 28 125 18 Q115 30 100 38Z" fill="rgba(184,146,58,0.06)" stroke="rgba(184,146,58,0.15)" stroke-width="0.6"/>
+                                <path d="M100 35 Q70 25 55 10 Q65 22 100 28 Q135 22 145 10 Q130 25 100 35Z" fill="rgba(184,146,58,0.04)" stroke="rgba(184,146,58,0.10)" stroke-width="0.5"/>
+                                <path d="M100 32 Q55 20 35 5 Q50 18 100 24 Q150 18 165 5 Q145 20 100 32Z" fill="rgba(184,146,58,0.03)" stroke="rgba(184,146,58,0.08)" stroke-width="0.4"/>
+                            </g>
+                        </svg>
+                        <!-- 香烟缭绕 -->
+                        <div class="incense-smoke">
+                            <div class="smoke-wisp wisp-1"></div>
+                            <div class="smoke-wisp wisp-2"></div>
+                            <div class="smoke-wisp wisp-3"></div>
+                        </div>
+                        <!-- 万字纹暗纹 -->
+                        <div class="wan-overlay"></div>
+                        <div class="glow glow-1"></div>
+                        <div class="glow glow-2"></div>
+                        <canvas id="vrm-canvas"></canvas>
+                        <div id="loading" class="loading" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px;">
+                            <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style="width:32px;height:32px;animation:lotusSpin 3s linear infinite;">
+                                <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(184,146,58,0.15)" stroke-width="1.5"/>
+                                <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(184,146,58,0.5)" stroke-width="1.5" stroke-dasharray="25 75" stroke-linecap="round"/>
+                                <g fill="rgba(184,146,58,0.3)">
+                                    <ellipse cx="20" cy="10" rx="3" ry="1.5"/>
+                                    <ellipse cx="20" cy="10" rx="3" ry="1.5" transform="rotate(60 20 20)"/>
+                                    <ellipse cx="20" cy="10" rx="3" ry="1.5" transform="rotate(120 20 20)"/>
+                                    <ellipse cx="20" cy="10" rx="3" ry="1.5" transform="rotate(180 20 20)"/>
+                                    <ellipse cx="20" cy="10" rx="3" ry="1.5" transform="rotate(240 20 20)"/>
+                                    <ellipse cx="20" cy="10" rx="3" ry="1.5" transform="rotate(300 20 20)"/>
+                                </g>
+                            </svg>
+                            <span style="color:#6d5438;font-size:12px;">正在加载模型...</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="avatar-model-picker" aria-live="polite">
+                    <label for="avatar-model-select">选择数字人风格</label>
+                    <select id="avatar-model-select" class="model-select" disabled>
+                        <option value="">正在加载可用风格...</option>
+                    </select>
+                    <p id="avatar-model-status" class="avatar-model-status">正在加载风格列表...</p>
+                </section>
+
+                <section class="preference-section">
+                    <h3>选择游览偏好</h3>
+                    <div class="interest-grid" id="interest-grid">
+                        <button class="interest-card active" data-interest="history" type="button">历史文化</button>
+                        <button class="interest-card" data-interest="nature" type="button">自然风光</button>
+                        <button class="interest-card" data-interest="family" type="button">亲子互动</button>
+                        <button class="interest-card" data-interest="relax" type="button">舒缓漫游</button>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span>AI 推荐路线</span>
+                            <span class="route-duration" id="route-duration">3.5小时</span>
+                        </div>
+                        <h4 id="route-name">文化深度线</h4>
+                        <p class="route-pitch" id="route-pitch"></p>
+                        <div class="route-stops" id="route-stops"></div>
+                    </div>
+                </section>
+            </aside>
+
+            <aside class="middle-panel">
+                <section class="weather-section" id="weather-section">
+                    <div class="weather-header">
+                        <span class="weather-title">🌤 实时天气</span>
+                        <span class="weather-loc" id="weather-loc">无锡·灵山胜境</span>
+                    </div>
+                    <div class="weather-body" id="weather-body">
+                        <div class="weather-main">
+                            <div class="weather-icon" id="weather-icon">⛅</div>
+                            <div class="weather-temp" id="weather-temp">--°</div>
+                        </div>
+                        <div class="weather-desc" id="weather-desc">正在获取天气信息…</div>
+                        <div class="weather-meta">
+                            <div class="weather-meta-item">
+                                <span class="weather-meta-label">湿度</span>
+                                <span class="weather-meta-value" id="weather-humidity">--%</span>
+                            </div>
+                            <div class="weather-meta-item">
+                                <span class="weather-meta-label">风力</span>
+                                <span class="weather-meta-value" id="weather-wind">--</span>
+                            </div>
+                            <div class="weather-meta-item">
+                                <span class="weather-meta-label">体感</span>
+                                <span class="weather-meta-value" id="weather-feels">--°</span>
+                            </div>
+                        </div>
+                        <div class="weather-tip" id="weather-tip">适宜游览，记得防晒补水</div>
+                    </div>
+                </section>
+
+                <section class="map-section map-section-persistent" id="map-section">
+                    <div class="map-header" id="map-toggle">
+                        <span>📍 景区地图</span>
+                        <button class="map-expand-btn" id="map-expand-btn" type="button" title="全屏查看">⛶</button>
+                    </div>
+                    <div class="map-body" id="map-body">
+                        <div id="amap-container" class="amap-container"></div>
+                        <div class="map-info" id="map-info">
+                            <span id="map-status">地图加载中...</span>
+                        </div>
+                    </div>
+                    <button class="map-fullscreen-close hidden" id="map-fullscreen-close">✕</button>
+                </section>
+            </aside>
+
+            <section class="chat-section">
+
+                <div class="quick-questions">
+                    <button data-question="景区有什么必看景点？" type="button">必看景点</button>
+                    <button data-question="文化路线怎么逛？" type="button">文化路线</button>
+                    <button data-question="带孩子怎么玩？" type="button">亲子玩法</button>
+                    <button data-question="灵山大佛多高？" type="button">事实问答</button>
+                    <button data-question="我对历史文化感兴趣，帮我规划路线" type="button">个性推荐</button>
+                </div>
+
+                <div class="chat-messages" id="chat-log">
+                    <div class="message assistant">
+                        <div class="message-avatar">
+                            <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M16 5 Q18 12 16 19 Q14 12 16 5Z" fill="#B8923A" stroke="#8A6A20" stroke-width="0.6"/>
+                                    <path d="M8 9 Q12 13 14 19 Q10 15 8 9Z" fill="#D4A66A" stroke="#8A6A20" stroke-width="0.5"/>
+                                    <path d="M24 9 Q20 13 18 19 Q22 15 24 9Z" fill="#D4A66A" stroke="#8A6A20" stroke-width="0.5"/>
+                                    <path d="M4 13 Q9 13 12 18 Q8 16 4 13Z" fill="#E8C896" stroke="#8A6A20" stroke-width="0.4"/>
+                                    <path d="M28 13 Q23 13 20 18 Q24 16 28 13Z" fill="#E8C896" stroke="#8A6A20" stroke-width="0.4"/>
+                                    <circle cx="16" cy="14" r="2.2" fill="#B8923A" stroke="#8A6A20" stroke-width="0.5"/>
+                                    <path d="M16 19 Q15 25 16 29" stroke="#5A7E68" stroke-width="0.8" fill="none"/>
+                                    <path d="M10 27 Q13 25 16 27 Q19 25 22 27" stroke="#5A7E68" stroke-width="0.6" fill="none"/>
+                                </g>
+                            </svg>
+                        </div>
+                        <div class="message-content">
+                            <p>您好，我是景区 AI 数字人导游<span class="avatar-dynamic-name">“小灵”</span>。您可以直接问我景点故事、游览路线，或者用语音向我提问。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-input-area">
+                    <textarea id="chat-input" rows="2" placeholder="输入问题，例如：帮我规划路线..."></textarea>
+                    <div class="input-buttons">
+                        <button class="ghost-btn voice-btn" id="voice-btn" type="button">🎤 按住说话</button>
+                        <button class="primary-btn" id="send-btn" type="button">发送</button>
+                    </div>
+                </div>
+
+                <div class="chat-feedback" id="feedback-bar" style="display:none">
+                    <span id="feedback-label" class="feedback-label">请对本次回答评分</span>
+                    <div class="feedback-actions">
+                        <div class="star-rating" id="star-rating">
+                            <button class="star-btn" data-score="1" type="button" aria-label="1星">★</button>
+                            <button class="star-btn" data-score="2" type="button" aria-label="2星">★</button>
+                            <button class="star-btn" data-score="3" type="button" aria-label="3星">★</button>
+                            <button class="star-btn" data-score="4" type="button" aria-label="4星">★</button>
+                            <button class="star-btn" data-score="5" type="button" aria-label="5星">★</button>
+                        </div>
+                        <button class="feedback-btn fb-submit" id="btn-feedback-submit" type="button" disabled>提交评价</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <template id="message-template">
+        <div class="message">
+            <div class="message-avatar"></div>
+            <div class="message-content">
+                <p></p>
+            </div>
+        </div>
+    </template>
+
+    <!-- 金色浮动光粒生成脚本 -->
+    <script>
+    (function() {
+        const container = document.getElementById('dharma-particles');
+        if (!container) return;
+        const count = 30;
+        for (let i = 0; i < count; i++) {
+            const p = document.createElement('div');
+            p.className = 'dharma-particle';
+            const left = Math.random() * 100;
+            const duration = 12 + Math.random() * 20;
+            const delay = Math.random() * duration;
+            const size = 2.5 + Math.random() * 4;
+            const drift = -50 + Math.random() * 100;
+            p.style.cssText = `
+                left: ${left}%;
+                width: ${size}px;
+                height: ${size}px;
+                animation-duration: ${duration}s;
+                animation-delay: -${delay}s;
+                --drift: ${drift}px;
+                opacity: ${0.25 + Math.random() * 0.35};
+            `;
+            container.appendChild(p);
+        }
+    })();
+    </script>
+
+    <script>
+    (function() {
+        var maxTries = 300, tries = 0;
+
+        function enableFallback() {
+            // GSAP 降级：直接显示主界面，不依赖动画
+            document.getElementById('start-btn')?.addEventListener('click', function() {
+                var story = document.getElementById('story-container');
+                var app = document.getElementById('app-container');
+                story.style.display = 'none';
+                app.style.display = '';
+                app.style.opacity = '1';
+                app.style.transform = 'none';
+                app.classList.add('visible');
+                window.dispatchEvent(new Event('resize'));
+            });
+        }
+
+        function gsapReady() {
+            if (typeof gsap === 'undefined') {
+                if (++tries < maxTries) { requestAnimationFrame(gsapReady); }
+                else { enableFallback(); }
+                return;
+            }
+
+            var heroTl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+            heroTl
+                .from('.hero-lotus', { opacity: 0, scale: 0.6, duration: 1.2 })
+                .from('.hero-title', { opacity: 0, y: 40, duration: 1 }, '-=0.6')
+                .from('.hero-sub', { opacity: 0, y: 20, duration: 0.8 }, '-=0.4')
+                .from('.hero-scroll-hint', { opacity: 0, y: 10, duration: 0.6 }, '-=0.2');
+
+            document.getElementById('start-btn')?.addEventListener('click', function() {
+                var story = document.getElementById('story-container');
+                var app = document.getElementById('app-container');
+                var heroLotus = document.querySelector('.hero-lotus');
+                var heroTitle = document.querySelector('.hero-title');
+                var heroSub = document.querySelector('.hero-sub');
+                var heroHint = document.querySelector('.hero-scroll-hint');
+
+                // GSAP 降级：CDN 加载失败时直接显示主界面
+                if (typeof gsap === 'undefined') {
+                    story.style.display = 'none';
+                    app.style.display = '';
+                    app.style.opacity = '1';
+                    app.style.transform = 'none';
+                    app.classList.add('visible');
+                    window.dispatchEvent(new Event('resize'));
+                    return;
+                }
+
+                // 创建过渡遮罩
+                var overlay = document.createElement('div');
+                overlay.style.cssText = 'position:fixed;inset:0;background:radial-gradient(circle,rgba(212,168,67,0.3),rgba(10,9,8,0.95));z-index:9999;opacity:0;pointer-events:none;';
+                document.body.appendChild(overlay);
+
+                // 惊艳的过渡动画序列
+                var tl = gsap.timeline();
+                
+                // 1. 光效扩散
+                tl.to(overlay, {
+                    opacity: 1,
+                    duration: 0.4,
+                    ease: 'power2.in',
+                })
+                // 2. 莲花放大并旋转消失
+                .to(heroLotus, {
+                    scale: 3,
+                    rotation: 180,
+                    opacity: 0,
+                    duration: 0.5,
+                    ease: 'power2.in',
+                }, 0)
+                // 3. 标题上移消失
+                .to(heroTitle, {
+                    y: -60,
+                    opacity: 0,
+                    letterSpacing: '0.4em',
+                    duration: 0.4,
+                    ease: 'power2.in',
+                }, 0.1)
+                // 4. 副标题消失
+                .to(heroSub, {
+                    y: -40,
+                    opacity: 0,
+                    duration: 0.3,
+                    ease: 'power2.in',
+                }, 0.15)
+                // 5. 整体场景缩小
+                .to(story, {
+                    scale: 0.9,
+                    opacity: 0,
+                    duration: 0.5,
+                    ease: 'power2.inOut',
+                }, 0.2)
+                // 6. 遮罩淡出，显示主界面
+                .to(overlay, {
+                    opacity: 0,
+                    duration: 0.6,
+                    ease: 'power2.out',
+                    onComplete: function() {
+                        overlay.remove();
+                    },
+                }, 0.7);
+                
+                // 延迟显示主界面
+                setTimeout(function() {
+                    story.style.display = 'none';
+                    app.style.display = '';
+                    app.style.opacity = '0';
+                    app.style.transform = 'scale(1.05)';
+                    
+                    requestAnimationFrame(function() {
+                        // 主界面入场动画
+                        gsap.to(app, {
+                            opacity: 1,
+                            scale: 1,
+                            duration: 0.8,
+                            ease: 'power3.out',
+                            onComplete: function() {
+                                app.classList.add('visible');
+                                window.dispatchEvent(new Event('resize'));
+                            }
+                        });
+                        
+                        // 左侧面板滑入
+                        gsap.from('.left-panel', {
+                            x: -50,
+                            opacity: 0,
+                            duration: 0.6,
+                            delay: 0.3,
+                            ease: 'power3.out',
+                        });
+                        
+                        // 聊天区域从右侧滑入
+                        gsap.from('.chat-section', {
+                            x: 50,
+                            opacity: 0,
+                            duration: 0.6,
+                            delay: 0.4,
+                            ease: 'power3.out',
+                        });
+                    });
+                }, 600);
+            });
+
+        }
+
+        window.addEventListener('DOMContentLoaded', gsapReady);
+    })();
+    </script>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+    <script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.152.2/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.152.2/examples/jsm/",
+        "@pixiv/three-vrm": "https://unpkg.com/@pixiv/three-vrm@2.1.1/lib/three-vrm.module.min.js"
+    }
+}
+</script>
+    <script type="module">
+    const loadingEl = document.getElementById('loading');
+    const stage = document.getElementById('vrm-stage');
+    const canvas = document.getElementById('vrm-canvas');
+    const chatLog = document.getElementById('chat-log');
+
+    function showStatus(message) {
+        loadingEl.style.display = 'flex';
+        const span = loadingEl.querySelector('span');
+        if (span) span.textContent = message;
+        else loadingEl.textContent = message;
+    }
+
+    try {
+        showStatus('正在初始化 3D 引擎...');
+
+        const THREE = await import('three');
+        const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
+        const { VRMLoaderPlugin } = await import('@pixiv/three-vrm');
+
+        // 统一说话检测：真实音频在播放，或时间驱动口型有输出值时，都视为正在说话。
+        function isSpeaking() {
+            const audioOn = !!(window.vrmAudioElement && !window.vrmAudioElement.paused && !window.vrmAudioElement.ended);
+            const lipOn = (window.currentLipValue || 0) > 0.01;
+            return audioOn || lipOn;
+        }
+
+        const state = {
+            vrm: null,
+            vrmRoot: null,
+            animationStarted: false,
+            mood: 'idle',
+            //speakingUntil: 0,
+            smileUntil: 0,
+            blinkUntil: 0,
+            nextBlinkAt: performance.now() + 1200,
+            blinkHoldUntil: 0,
+            motionTime: 0,
+            restPose: null,
+            currentPhonemeSequence: null,
+            currentEmotionBlend: {},
+            currentSpeechText: '',
+        };
+
+        const renderer = new THREE.WebGLRenderer({
+            canvas,
+            alpha: true,
+            antialias: true,
+        });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.setClearAlpha(0);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(30, 380 / 280, 0.01, 100);
+        const clock = new THREE.Clock();
+
+        function resize() {
+            const width = stage.clientWidth || 380;
+            const height = stage.clientHeight || 280;
+            renderer.setSize(width, height, false);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            if (state.vrmRoot) frameModel(state.vrmRoot);
+        }
+
+        resize();
+        if (typeof ResizeObserver !== 'undefined') {
+            new ResizeObserver(() => resize()).observe(stage);
+        }
+        camera.position.set(0, 1.0, -2.8);
+
+        const keyLight = new THREE.DirectionalLight(0xffffff, 0.6);
+        keyLight.position.set(1.6, 2.4, 2.2);
+        scene.add(keyLight);
+
+        const fillLight = new THREE.DirectionalLight(0xffd7aa, 0.3);
+        fillLight.position.set(-1.2, 1.4, 1.5);
+        scene.add(fillLight);
+
+        const rimLight = new THREE.DirectionalLight(0x9ec5ff, 0.2);
+        rimLight.position.set(-1.8, 0.8, -1.8);
+        scene.add(rimLight);
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.25));
+
+        function frameModel(root) {
+    const box = new THREE.Box3().setFromObject(root);
+    const size = box.getSize(new THREE.Vector3());
+
+    const TARGET_HEIGHT = 1.5;
+    const scale = TARGET_HEIGHT / (size.y || 1);
+    root.scale.setScalar(scale);
+
+    const scaledBox = new THREE.Box3().setFromObject(root);
+    const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
+
+    const modelName = window._currentVrmFile || '';
+    const perModelOffsets = {
+        '景.vrm': 0.4,
+        '区.vrm': 0.4,
+        '灵.vrm': 0.0,
+    };
+    const yOffset = perModelOffsets[modelName] || 0;
+
+    root.position.set(
+        -scaledCenter.x,
+        -scaledBox.min.y + yOffset,
+        -scaledCenter.z
+    );
+
+    const finalBox = new THREE.Box3().setFromObject(root);
+    const finalSize = finalBox.getSize(new THREE.Vector3());
+
+    const headBone = state.vrm?.humanoid?.getNormalizedBoneNode?.('head');
+    let targetY;
+    if (headBone) {
+        const hp = new THREE.Vector3();
+        headBone.getWorldPosition(hp);
+        targetY = hp.y;
+    } else {
+        targetY = TARGET_HEIGHT * 0.8;
+    }
+
+    const fovRad = (30 * Math.PI) / 180;
+    const aspect = (stage.clientWidth || 380) / (stage.clientHeight || 280);
+
+    const distV = targetY / Math.tan(fovRad / 2) * 0.6;
+    const distH = finalSize.x * 0.55 / (Math.tan(fovRad / 2) * aspect);
+    const dist = Math.max(distV, distH);
+
+    camera.position.set(0, targetY * 0.8, dist);
+    camera.lookAt(0, targetY * 0.8, 0);
+}
+
+        function getBone(name) {
+            return state.vrm?.humanoid?.getNormalizedBoneNode?.(name)
+                || state.vrm?.humanoid?.getRawBoneNode?.(name)
+                || null;
+        }
+
+        function captureRestPose() {
+            // 此模型手臂默认张开，强制到自然下垂位置
+            const la = getBone('leftUpperArm');
+            const ra = getBone('rightUpperArm');
+            if (la) {
+                            la.rotation.x = 0.05;
+                            la.rotation.y = 0;
+                            la.rotation.z =-1.5;
+                    }
+
+                    if (ra) {
+                            ra.rotation.x = 0.05;
+                            ra.rotation.y = 0;
+                            ra.rotation.z = 1.5;
+                    }
+            // 手掌自然下垂
+            const lh = getBone('leftHand');
+            const rh = getBone('rightHand');
+            if (lh) lh.rotation.x = -0.35;
+            if (rh) rh.rotation.x = -0.35;
+
+            const head = getBone('head');
+            const neck = getBone('neck');
+            const spine = getBone('spine');
+            const chest = getBone('chest');
+            const leftUpperArm = getBone('leftUpperArm');
+            const rightUpperArm = getBone('rightUpperArm');
+            const leftLowerArm = getBone('leftLowerArm');
+            const rightLowerArm = getBone('rightLowerArm');
+            const leftHand = getBone('leftHand');
+            const rightHand = getBone('rightHand');
+
+            state.restPose = {
+                head: head ? head.rotation.clone() : null,
+                neck: neck ? neck.rotation.clone() : null,
+                spine: spine ? spine.rotation.clone() : null,
+                chest: chest ? chest.rotation.clone() : null,
+                leftUpperArm: leftUpperArm ? leftUpperArm.rotation.clone() : null,
+                rightUpperArm: rightUpperArm ? rightUpperArm.rotation.clone() : null,
+                leftLowerArm: leftLowerArm ? leftLowerArm.rotation.clone() : null,
+                rightLowerArm: rightLowerArm ? rightLowerArm.rotation.clone() : null,
+                leftHand: leftHand ? leftHand.rotation.clone() : null,
+                rightHand: rightHand ? rightHand.rotation.clone() : null,
+            };
+        }
+
+        function setExpression(names, value) {
+            if (!state.vrm?.expressionManager) return false;
+
+            for (const name of names) {
+                try {
+                    state.vrm.expressionManager.setValue(name, value);
+                    return true;
+                } catch (error) {
+                    continue;
+                }
+            }
+
+            return false;
+        }
+
+        // ========== 模型预设名适配层 ==========
+        // VRM 1.0 模型通常只支持 14 个标准 preset (happy/angry/sad/relaxed/surprised
+        // /aa/ih/ou/ee/oh/blink/blinkLeft/blinkRight/neutral).
+        // 之前直接用 ARKit 名 (mouthSmile/browInnerUp/eyeWideLeft...) 大多是静默 no-op.
+        // 这里在模型加载后扫描实际可用 preset, 并把 ARKit 风格名映射到最近的标准 preset.
+        let _vrmAvailablePresets = null;
+        function getAvailablePresets() {
+            if (_vrmAvailablePresets) return _vrmAvailablePresets;
+            const mgr = state.vrm?.expressionManager;
+            if (!mgr) return new Set();
+            const names = new Set();
+            // 优先用内部 _expressions 列表; 回退 _expressionMap
+            const list = mgr._expressions || mgr._expressionMap || {};
+            if (Array.isArray(list)) {
+                for (const e of list) {
+                    if (e && e.expressionName) names.add(e.expressionName);
+                }
+            } else if (typeof list === 'object') {
+                for (const k of Object.keys(list)) names.add(k);
+            }
+            _vrmAvailablePresets = names;
+            console.log('[VRM] available expression presets:', Array.from(names).join(', '));
+            return names;
+        }
+        // ARKit 风格名 -> VRM 1.0 标准 preset 名的近似映射
+        const ARKIT_TO_VRM_PRESET = {
+            // 嘴部笑 -> happy
+            'mouthSmile': 'happy', 'mouthSmileLeft': 'happy', 'mouthSmileRight': 'happy',
+            'mouthStretch': 'happy', 'mouthDimpleLeft': 'happy', 'mouthDimpleRight': 'happy',
+            // 嘴部平/抿 -> sad (严肃)
+            'mouthPress': 'sad', 'mouthPressLeft': 'sad', 'mouthPressRight': 'sad',
+            'mouthPucker': 'sad', 'mouthFunnel': 'sad', 'mouthRollLower': 'sad', 'mouthRollUpper': 'sad',
+            // 嘴部撅 -> sad
+            'mouthFrown': 'sad', 'mouthFrownLeft': 'sad', 'mouthFrownRight': 'sad',
+            'mouthShrugLower': 'sad', 'mouthShrugUpper': 'sad',
+            // 张嘴/下颌开 -> aa/oh
+            'jawOpen': 'aa', 'jawForward': 'aa', 'jawLeft': 'aa', 'jawRight': 'aa',
+            'mouthOpen': 'aa', 'mouthClose': 'neutral',
+            // 眉毛挑 -> surprised
+            'browInnerUp': 'surprised', 'browOuterUpLeft': 'surprised', 'browOuterUpRight': 'surprised',
+            // 眉毛下压 -> angry
+            'browDownLeft': 'angry', 'browDownRight': 'angry',
+            'browInnerDown': 'angry', 'browInnerDownLeft': 'angry', 'browInnerDownRight': 'angry',
+            // 眼睛大睁 -> surprised
+            'eyeWideLeft': 'surprised', 'eyeWideRight': 'surprised',
+            'eyeLookUpLeft': 'surprised', 'eyeLookUpRight': 'surprised',
+            // 眼睛眯/笑眯 -> happy
+            'eyeSquintLeft': 'happy', 'eyeSquintRight': 'happy',
+            'eyeBlinkLeft': 'blinkLeft', 'eyeBlinkRight': 'blinkRight',
+            // 脸颊微动 -> happy
+            'cheekSquintLeft': 'happy', 'cheekSquintRight': 'happy', 'cheekPuff': 'happy',
+            // 鼻子皱 -> angry
+            'noseSneerLeft': 'angry', 'noseSneerRight': 'angry',
+            'noseWrinkleLeft': 'angry', 'noseWrinkleRight': 'angry',
+        };
+        // 把 blendshape 名(可能含 ARKit 写法)翻译成模型实际可用的 preset
+        function mapBlendShapeName(name) {
+            if (!name) return name;
+            const avail = getAvailablePresets();
+            if (avail.has(name)) return name;
+            const mapped = ARKIT_TO_VRM_PRESET[name];
+            if (mapped && avail.has(mapped)) return mapped;
+            // 二次兜底: 开心/愤怒/悲伤/惊讶/放松 这五个标准 preset 之一
+            for (const fb of ['happy', 'angry', 'sad', 'surprised', 'relaxed']) {
+                if (avail.has(fb)) return fb;
+            }
+            return null; // 模型一个都不支持, 调用方应跳过
+        }
+        // 把 blendshape dict 整体转换, 同源 key 合并 (取最大)
+        function remapBlendDict(dict) {
+            const avail = getAvailablePresets();
+            const out = {};
+            for (const [k, v] of Object.entries(dict)) {
+                if (typeof v !== 'number' || v <= 0) continue;
+                const mapped = mapBlendShapeName(k);
+                if (!mapped) continue;
+                out[mapped] = Math.max(out[mapped] || 0, v);
+            }
+            return out;
+        }
+
+        
+        // ========== 平滑表情过渡引擎 v2 (缓动曲线 + 层级管理) ==========
+        let blendShapeTargets = {};
+        let blendShapeCurrents = {};
+        // 层级: 0=待机, 1=倾听微表情, 2=情绪表情, 3=口型(最高)
+        const BLEND_SHAPE_LAYERS = [
+            { name: 'idle', weight: 0.15 },
+            { name: 'micro', weight: 0.25 },
+            { name: 'emotion', weight: 0.45 },
+            { name: 'lip', weight: 1.0 },
+        ];
+        let blendShapeLayerValues = [{}, {}, {}, {}];
+
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function easeOutBack(t) {
+            const c1 = 1.70158;
+            const c3 = c1 + 1;
+            return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+        }
+
+        function easeOutElastic(t) {
+            if (t === 0 || t === 1) return t;
+            return Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * (2 * Math.PI) / 3) + 1;
+        }
+
+        function setBlendShapeTarget(name, value, layer = 2) {
+            // 关键修复: 模型可能没有这个 preset (如 ARKit 名 mouthSmile), 自动映射到最近的标准 preset
+            const mapped = mapBlendShapeName(name);
+            if (!mapped) return;
+            const clamped = Math.max(0, Math.min(1, value || 0));
+            if (!blendShapeLayerValues[layer]) blendShapeLayerValues[layer] = {};
+            blendShapeLayerValues[layer][mapped] = clamped;
+            // Recompute composite target from all layers
+            let composite = 0;
+            for (let l = 0; l <= layer; l++) {
+                const lv = blendShapeLayerValues[l]?.[mapped];
+                if (lv !== undefined) {
+                    const w = BLEND_SHAPE_LAYERS[l].weight;
+                    composite = composite + lv * w * (1 - composite);
+                }
+            }
+            blendShapeTargets[mapped] = Math.min(1, composite);
+        }
+
+        // 清除单层所有blendshape
+        function clearBlendShapeLayer(layer) {
+            if (blendShapeLayerValues[layer]) {
+                blendShapeLayerValues[layer] = {};
+            }
+        }
+
+        // 获取目标表情的动态过渡速度
+        function getLerpFactor(name) {
+            // 口型快速跟随，情绪慢速过渡
+            if (['aa','ih','ou','ee','oh','blink','blinkLeft','blinkRight'].includes(name)) return 0.35;
+            if (['happy','mouthSmile'].includes(name)) return 0.12;
+            return 0.08;
+        }
+
+        function updateBlendShapes() {
+            const vrm = state.vrm;
+            if (!vrm || !vrm.expressionManager) return;
+            const avail = getAvailablePresets();
+            for (const name of Object.keys(blendShapeTargets)) {
+                // 关键修复: 跳过模型不支持的 preset, 避免每次 try/catch 浪费
+                if (avail.size > 0 && !avail.has(name)) continue;
+                const current = blendShapeCurrents[name] || 0;
+                const target = blendShapeTargets[name] || 0;
+                const factor = getLerpFactor(name);
+                const newVal = current + (target - current) * factor;
+                if (Math.abs(newVal - current) < 0.003) {
+                    blendShapeCurrents[name] = target;
+                } else {
+                    blendShapeCurrents[name] = newVal;
+                }
+                try {
+                    vrm.expressionManager.setValue(name, blendShapeCurrents[name]);
+                } catch (e) {}
+            }
+        }
+
+        // ========== 表情BlendShape层级管理工具 ==========
+        // 在写表情前清除对应层，避免累加
+        function clearLipLayer() {
+            clearBlendShapeLayer(3);
+        }
+        function clearEmotionLayer() {
+            clearBlendShapeLayer(2);
+        }
+        function clearMicroLayer() {
+            clearBlendShapeLayer(1);
+        }
+
+        // ========== 改进的 applyFacialMotion v2 ==========
+        function applyFacialMotion(now) {
+            if (!state.vrm?.expressionManager) return;
+
+            // ---- 眨眼: 加入微变化 ----
+            if (now >= state.nextBlinkAt) {
+                // 有时快速双眨，有时单眨
+                const isDoubleBlink = Math.random() < 0.15;
+                state.blinkUntil = now + (isDoubleBlink ? 160 : 100 + Math.random() * 40);
+                state.blinkHoldUntil = now + (isDoubleBlink ? 100 : 40 + Math.random() * 30);
+                state.nextBlinkAt = now + 1800 + Math.random() * 3500;
+                state.isDoubleBlink = isDoubleBlink;
+            }
+
+            let blink = 0;
+            if (now < state.blinkUntil) {
+                const blinkStart = state.blinkUntil - (state.isDoubleBlink ? 160 : 120);
+                if (now < state.blinkHoldUntil) {
+                    blink = Math.min(1, (now - blinkStart) / 40);
+                } else {
+                    blink = Math.max(0, 1 - (now - state.blinkHoldUntil) / 40);
+                }
+            }
+
+            // ---- 说话检测 ----
+            const speaking = isSpeaking();
+
+            // ---- 微笑: 渐变而非开关 ----
+            const smiling = now < state.smileUntil || state.mood === 'happy';
+            const smileTarget = smiling ? 0.4 + Math.sin(state.motionTime * 2.8) * 0.1 : 0;
+
+            // ---- 情绪表情 (Layer 2) ----
+            clearEmotionLayer();
+            const emotionBias = state.currentEmotionBlend || {};
+            const emotionWeight = speaking ? 0.35 : 0.85;
+
+            // 情绪blendshape: 说话时压低情绪表情让位给口型
+            for (const [k, v] of Object.entries(emotionBias)) {
+                if (!['aa','ih','ou','ee','oh','blink','blinkLeft','blinkRight'].includes(k)) {
+                    setBlendShapeTarget(k, v * emotionWeight, 2);
+                }
+            }
+
+            // ---- 微表情 (Layer 1) ----
+            clearMicroLayer();
+            // 眉毛随说话自然微动
+            const browRaise = speaking
+                ? 0.08 + Math.sin(state.motionTime * 2.7) * 0.06 + Math.sin(state.motionTime * 5.1) * 0.03
+                : 0.03 + Math.sin(state.motionTime * 1.3) * 0.02;
+            setBlendShapeTarget('browInnerUp', browRaise, 1);
+
+            // 说话时嘴角微颤 (natural micro)
+            if (speaking) {
+                const mouthTremor = 0.04 + Math.sin(state.motionTime * 11.7) * 0.03;
+                // 用 eyeSquint 模拟脸颊微动
+                setBlendShapeTarget('cheekSquintLeft', mouthTremor * 0.5, 1);
+                setBlendShapeTarget('cheekSquintRight', mouthTremor * 0.5, 1);
+            }
+
+            // ---- 口型 (Layer 3) ----
+            clearLipLayer();
+            ['aa', 'ih', 'ee', 'ou', 'oh'].forEach((m) => setBlendShapeTarget(m, 0, 3));
+            if (speaking) {
+                const volume = window.currentLipValue || 0;
+                const t = performance.now() / 1000;
+                const rhythm = Math.abs(Math.sin(t * 6.5 + Math.sin(t * 2.5) * 0.3));
+
+                if (volume > 0.05) {
+                    const openBase = Math.pow(volume, 0.5) * 0.3;
+                    const open = Math.min(0.6, openBase + rhythm * 0.2);
+
+                    // —— 频域分类驱动口型（音频驱动时，根据实际频谱选择对应 viseme） ——
+                    const classifiedViseme = window.currentViseme;
+                    if (classifiedViseme) {
+                        setBlendShapeTarget(classifiedViseme, open, 3);
+                        if (classifiedViseme === 'aa') setBlendShapeTarget('ih', open * 0.25, 3);
+                        else if (classifiedViseme === 'ee') setBlendShapeTarget('ih', open * 0.35, 3);
+                        else if (classifiedViseme === 'ou') setBlendShapeTarget('oh', open * 0.35, 3);
+                    } else {
+                        // —— 时间驱动 fallback（降级时保持原有周期性口型） ——
+                        const phase = (t * 5) % 1;
+                        if (phase < 0.3) {
+                            setBlendShapeTarget('aa', open * (0.5 + Math.sin(phase * Math.PI) * 0.3), 3);
+                            setBlendShapeTarget('ih', open * 0.3, 3);
+                        } else if (phase < 0.6) {
+                            setBlendShapeTarget('ih', open * 0.6, 3);
+                            setBlendShapeTarget('ee', open * 0.4, 3);
+                        } else {
+                            setBlendShapeTarget('ou', open * 0.5, 3);
+                            setBlendShapeTarget('oh', open * 0.3, 3);
+                        }
+                    }
+                }
+            }
+
+            // ---- 眨眼 (Layer 3 旁边, 高优先级) ----
+            setBlendShapeTarget('blink', blink, 3);
+            setBlendShapeTarget('blinkLeft', blink, 3);
+            setBlendShapeTarget('blinkRight', blink, 3);
+
+            // ---- 微笑放在情绪层叠加 ----
+            setBlendShapeTarget('happy', smileTarget, 2);
+
+            updateBlendShapes();
+            state.vrm.expressionManager.update();
+        }
+        // ========== 动作系统 v2 (分层式 + 随机化 + 预备跟随) ==========
+        // 层级: 0=呼吸微摆 1=说话头动 2=情绪动作 3=紧急动作
+        // 动作定义：基于VRM humanoid骨骼的自然人动作
+        function randomizeActionParams(config, seed) {
+            // 幅度随机抖动 ±15%
+            const ampVar = 0.85 + Math.random() * 0.3;
+            // 速度随机抖动 ±15%
+            const speedVar = 0.85 + Math.random() * 0.3;
+            return {
+                duration: Math.round(config.duration * speedVar),
+                amplitude: ampVar,
+            };
+        }
+
+        const actions = {
+            nod: {
+                name: '点头', duration: 900, layer: 2,
+                bones: { head: { x: 0.22, y: 0, z: 0 }, neck: { x: 0.10, y: 0, z: 0 } },
+                returnToRest: true,
+                oscillate: true, oscillateBone: 'head', oscillateAxis: 'x',
+                oscillateAmplitude: 0.22, repeat: 2,
+                anticipationDuration: 100,
+            },
+            shake: {
+                name: '摇头', duration: 500, layer: 2,
+                bones: { head: { x: 0, y: 0.25, z: 0 }, neck: { x: 0, y: 0.15, z: 0 } },
+                returnToRest: true, repeat: 2, oscillate: true,
+                anticipationDuration: 80,
+            },
+            bow: {
+                name: '鞠躬', duration: 1800, layer: 2,
+                bones: { spine: { x: 0.32, y: 0, z: 0 }, chest: { x: 0.18, y: 0, z: 0 }, head: { x: 0.12, y: 0, z: 0 } },
+                returnToRest: true, holdTime: 500,
+                anticipationDuration: 150,
+            },
+            tilt: {
+                name: '歪头', duration: 600, layer: 2,
+                bones: { head: { x: 0, y: 0, z: 0.18 }, neck: { x: 0, y: 0, z: 0.1 } },
+                returnToRest: true,
+                oscillate: true, oscillateBone: 'head', oscillateAxis: 'z', oscillateAmplitude: 0.08, repeat: 1,
+                anticipationDuration: 80,
+            },
+            think: {
+                name: '思考', duration: 1200, layer: 2,
+                bones: {
+                    rightUpperArm: { x: -2, y: 0.55, z: -0.15 },
+                    rightLowerArm: { x: 1.5, y: 1.2, z: -2 },
+                    rightHand: { x: 0.55, y: 0, z: -0.08 },
+                    head: { x: 0.5, y: 0, z: 0.08 },
+                    neck: { x: 0.03, y: 0, z: 0.03 },
+                },
+                returnToRest: true,
+                anticipationDuration: 150,
+                followThroughDuration: 200,
+            },
+            wave: {
+                name: '挥手', duration: 1400, layer: 2,
+                bones: {
+                    rightUpperArm: { x: -0.25, y: 0, z: -0.65 },
+                    rightLowerArm: { x: -1.15, y: 0, z: 0 },
+                    rightHand: { x: 0, y: 0, z: 0.08 },
+                },
+                returnToRest: true,
+                anticipationDuration: 200,
+            },
+            gesture: {
+                name: '手势', duration: 1000, layer: 2,
+                bones: { rightUpperArm: { x: -0.5, y: 0.4, z: -0.3 }, rightLowerArm: { x: -0.6, y: 0, z: 0.2 }, rightHand: { x: 0.2, y: 0, z: 0 } },
+                returnToRest: true,
+                anticipationDuration: 120,
+                followThroughDuration: 150,
+            },
+            spread: {
+                name: '双手展开', duration: 1000, layer: 2,
+                bones: {
+                    leftUpperArm: { x: -0.25, y: -0.15, z: 0.95 },
+                    leftLowerArm: { x: -1.05, y: 0, z: -0.15 },
+                    leftHand: { x: -0.65, y: 0, z: -0.08 },
+                    rightUpperArm: { x: -0.25, y: 0.15, z: -0.95 },
+                    rightLowerArm: { x: -1.05, y: 0, z: 0.15 },
+                    rightHand: { x: -0.65, y: 0, z: 0.08 },
+                },
+                returnToRest: true,
+                anticipationDuration: 150,
+            },
+            point: {
+                name: '指向', duration: 1000, layer: 2,
+                bones: {
+                    rightUpperArm: { x: -0.35, y: -0.18, z: -0.55 },
+                    rightLowerArm: { x: -0.65, y: 0, z: -0.08 },
+                    rightHand: { x: 0.05, y: 0, z: -0.12 },
+                    head: { x: -0.03, y: 0.12, z: 0 },
+                    neck: { x: -0.02, y: 0.05, z: 0 },
+                },
+                returnToRest: true,
+                anticipationDuration: 120,
+            },
+            openHand: {
+                name: '摊手', duration: 1000, layer: 2,
+                bones: {
+                    leftUpperArm: { x: -0.45, y: 0.55, z: 0.75 },
+                    leftLowerArm: { x: -0.65, y: 0.15, z: 0.25 },
+                    leftHand: { x: 0, y: 0, z: 0.08 },
+                    rightUpperArm: { x: -0.45, y: -0.55, z: -0.75 },
+                    rightLowerArm: { x: -0.65, y: -0.15, z: -0.25 },
+                    rightHand: { x: 0, y: 0, z: -0.08 },
+                },
+                returnToRest: true,
+                anticipationDuration: 130,
+            },
+            crossArms: {
+                name: '抱臂', duration: 1200, layer: 2,
+                bones: { leftUpperArm: { x: 0.2, y: 0.6, z: 0.4 }, leftLowerArm: { x: -1.2, y: 0, z: 0.3 }, rightUpperArm: { x: 0.2, y: -0.6, z: -0.4 }, rightLowerArm: { x: -1.2, y: 0, z: -0.3 } },
+                returnToRest: true,
+                anticipationDuration: 150,
+            },
+            lean: {
+                name: '前倾', duration: 800, layer: 1,
+                bones: { spine: { x: -0.08, y: 0, z: 0 }, chest: { x: -0.06, y: 0, z: 0 }, head: { x: -0.05, y: 0, z: 0 } },
+                returnToRest: true,
+                anticipationDuration: 100,
+            },
+            comfort: {
+                name: '安慰', duration: 800, layer: 2,
+                bones: { head: { x: -0.1, y: 0, z: 0.05 }, neck: { x: -0.05, y: 0, z: 0.02 } },
+                returnToRest: true, oscillate: true, repeat: 1,
+                oscillateBone: 'head', oscillateAxis: 'x', oscillateAmplitude: 0.05,
+                anticipationDuration: 100,
+            },
+        };
+const ACTION_EXPRESSIONS = {
+    nod: { mouthSmile: 0.25, browInnerUp: 0.15 },
+    shake: { mouthPress: 0.2, browDownLeft: 0.15, browDownRight: 0.15 },
+    bow: { eyeSquintLeft: 0.2, eyeSquintRight: 0.2, mouthSmile: 0.18 },
+    tilt: { browInnerUp: 0.3, mouthSmile: 0.15 },
+    think: { browInnerUp: 0.45, eyeSquintLeft: 0.2, eyeSquintRight: 0.2, mouthPress: 0.15 },
+    wave: { happy: 0.55, mouthSmile: 0.45, cheekSquintLeft: 0.15, cheekSquintRight: 0.15 },
+    gesture: { mouthSmile: 0.2, browInnerUp: 0.15 },
+    spread: { happy: 0.35, mouthSmile: 0.3 },
+    point: { browInnerUp: 0.25, aa: 0.1 },
+    openHand: { mouthSmile: 0.25, browInnerUp: 0.2 },
+    comfort: { sadness: 0.08, mouthSmile: 0.15, browInnerUp: 0.35 },
+};
+        // ========== 时间轴动作系统 (ActionTimeline) ==========
+        state.actionTimeline = [];
+        state.actionLayers = { 0: null, 1: null, 2: null, 3: null };
+        state.actionLayerStart = { 0: 0, 1: 0, 2: 0, 3: 0 };
+
+        function playAction(actionName, priority = 0) {
+            const action = actions[actionName];
+            if (!action) { console.warn(`未知动作: ${actionName}`); return; }
+            const expression = ACTION_EXPRESSIONS[actionName];
+
+            if (expression) {
+                state.currentEmotionBlend = {
+                    ...expression,
+                    // 动作表情保留稍长，避免瞬间消失
+                    _duration: action.duration,
+                    _startTime: performance.now(),
+                };
+                // 不再用硬setTimeout，改为在update里根据时间衰减
+            }
+
+            // 随机化参数
+            const ampVar = 0.8 + Math.random() * 0.4;  // 0.8~1.2
+            const speedVar = 0.8 + Math.random() * 0.4;
+
+            const layer = priority >= 3 ? 3 : (priority >= 2 ? 2 : (priority >= 1 ? 1 : 0));
+            const effectiveLayer = Math.max(layer, action.layer || 2);
+            state.actionLayers[effectiveLayer] = {
+                name: actionName,
+                config: action,
+                startTime: performance.now(),
+                priority,
+                repeatCount: 0,
+                amplitude: ampVar,
+                speed: speedVar,
+                phase: 'anticipation',
+                phaseStart: performance.now(),
+            };
+            state.actionLayerStart[effectiveLayer] = performance.now();
+        }
+
+        function setActionTimeline(timeline) {
+            if (!Array.isArray(timeline)) return;
+            state.actionTimeline = timeline.map(t => ({
+                type: t.type,
+                startMs: t.startMs || 0,
+                endMs: t.endMs || (t.startMs || 0) + 1000,
+                priority: t.priority ?? 1,
+                done: false,
+            }));
+            state.actionTimeline.sort((a, b) => a.startMs - b.startMs);
+            // 关键修复: 时间轴锚点对齐到音频实际开播时刻
+            // (流式响应里 done 事件到达时音频通常已经在播,
+            //  若用 performance.now() 会让早期动作延后触发)
+            const audioStart = window._audioFirstPlayTime;
+            if (audioStart && audioStart > 0) {
+                state.actionTimelineStart = audioStart;
+                console.log(`[ActionTimeline] anchored to audio first play (offset ${Math.round(performance.now() - audioStart)}ms ago)`);
+            } else {
+                state.actionTimelineStart = performance.now();
+            }
+        }
+
+        function _applyActionToBone(bone, rest, rotation, factor, config) {
+            if (!bone || !rest) return;
+            const oscillateBone = config.oscillateBone || null;
+            const isOscillating = oscillateBone === bone._boneName && config.oscillateAxis;
+            if (isOscillating) {
+                const axis = config.oscillateAxis;
+                const amp = config.oscillateAmplitude || rotation[axis] || 0;
+                bone.rotation[axis] = rest[axis] + amp * factor;
+                if (rotation.x !== undefined && axis !== 'x') bone.rotation.x = rest.x + (rotation.x || 0);
+                if (rotation.y !== undefined && axis !== 'y') bone.rotation.y = rest.y + (rotation.y || 0);
+                if (rotation.z !== undefined && axis !== 'z') bone.rotation.z = rest.z + (rotation.z || 0);
+            } else {
+                if (rotation.x !== undefined) bone.rotation.x = rest.x + rotation.x * factor;
+                if (rotation.y !== undefined) bone.rotation.y = rest.y + rotation.y * factor;
+                if (rotation.z !== undefined) bone.rotation.z = rest.z + rotation.z * factor;
+            }
+        }
+
+        function updateAction(delta) {
+            if (!state.vrm) return;
+            const now = performance.now();
+
+            // Process timeline actions
+            if (state.actionTimeline.length > 0 && state.actionTimelineStart) {
+                const elapsed = now - state.actionTimelineStart;
+                for (const entry of state.actionTimeline) {
+                    if (!entry.done && elapsed >= entry.startMs) {
+                        playAction(entry.type, entry.priority);
+                        entry.done = true;
+                    }
+                }
+            }
+
+            // Update each layer
+            for (let layer = 3; layer >= 0; layer--) {
+                const act = state.actionLayers[layer];
+                if (!act || !act.config) continue;
+                const elapsed = now - act.startTime;
+                const amp = act.amplitude || 1;
+
+                // ---- Anticipation Phase (预备动作) ----
+                const antDur = act.config.anticipationDuration || 0;
+                const followDur = act.config.followThroughDuration || 0;
+                const effectiveDuration = act.config.duration * (act.speed || 1);
+                const totalDuration = effectiveDuration + antDur + followDur;
+                const progress = Math.min(elapsed / totalDuration, 1.0);
+
+                let factor = 0;
+                let inAnticipation = false;
+
+                if (elapsed < antDur) {
+                    // 预备阶段: 反向微动 (如抬手前先微微下压)
+                    const p = elapsed / antDur;
+                    factor = -0.08 * Math.sin(p * Math.PI * 0.5) * amp;
+                    inAnticipation = true;
+                } else if (elapsed > antDur + effectiveDuration) {
+                    // 跟随阶段: 微微回弹后归位
+                    const p = (elapsed - antDur - effectiveDuration) / followDur;
+                    factor = (1 - 0.3 * Math.sin(p * Math.PI)) * Math.max(0, 1 - p);
+                    inAnticipation = false;
+                } else {
+                    const mainProgress = (elapsed - antDur) / effectiveDuration;
+                    const p = Math.min(mainProgress, 1.0);
+
+                    // ===== 带停顿的动作 =====
+                    if (act.config.holdTime) {
+                        const holdRatio = act.config.holdTime / effectiveDuration;
+                        const moveRatio = (1 - holdRatio) / 2;
+                        if (p < moveRatio) {
+                            const pp = p / moveRatio;
+                            factor = (0.5 - 0.5 * Math.cos(pp * Math.PI)) * amp;
+                        } else if (p < moveRatio + holdRatio) {
+                            factor = 1 * amp;
+                        } else {
+                            const pp = (p - moveRatio - holdRatio) / moveRatio;
+                            factor = (0.5 + 0.5 * Math.cos(pp * Math.PI)) * amp;
+                        }
+                    } else {
+                        factor = (0.5 - 0.5 * Math.cos(p * Math.PI)) * amp;
+                    }
+
+                    // 点头特殊处理 (两次)
+                    if (act.name === 'nod') {
+                        factor = Math.sin(p * Math.PI * 4) * 0.5 * amp;
+                        factor = Math.max(0, factor);
+                    }
+
+                    // 振荡动作
+                    if (act.config.oscillate && !inAnticipation) {
+                        const oscCount = (act.config.repeat || 1);
+                        factor = Math.sin(p * Math.PI * oscCount) * amp;
+                    }
+                }
+
+                // 挥手特殊处理 (保持原有手势逻辑, 加入幅度随机化)
+                if (act.name === 'wave') {
+                    const p = Math.min(elapsed / totalDuration, 1.0);
+                    const raiseFactor = Math.min(p / 0.5, 1);
+                    const wavePhase = Math.max(0, (p - 0.5) / 0.5);
+
+                    const upper = getBone('rightUpperArm');
+                    const lower = getBone('rightLowerArm');
+                    const hand = getBone('rightHand');
+
+                    if (upper && lower && hand && state.restPose?.rightUpperArm && state.restPose?.rightLowerArm && state.restPose?.rightHand) {
+                        upper.rotation.x = state.restPose.rightUpperArm.x + (-0.18 * raiseFactor * amp);
+                        upper.rotation.z = state.restPose.rightUpperArm.z + (-2.35 * raiseFactor * amp);
+                        lower.rotation.x = state.restPose.rightLowerArm.x + (-1.35 * raiseFactor * amp);
+
+                        let wave = 0;
+                        if (p > 0.5) {
+                            wave = Math.sin(wavePhase * Math.PI * (3 + Math.random() * 2)) * 0.12 * amp;
+                        }
+                        hand.rotation.z = state.restPose.rightHand.z + wave;
+                    }
+
+                    if (p >= 1.0) {
+                        if (upper && state.restPose?.rightUpperArm) upper.rotation.copy(state.restPose.rightUpperArm);
+                        if (lower && state.restPose?.rightLowerArm) lower.rotation.copy(state.restPose.rightLowerArm);
+                        if (hand && state.restPose?.rightHand) hand.rotation.copy(state.restPose.rightHand);
+                        state.actionLayers[layer] = null;
+                    }
+                    continue;
+                }
+
+                Object.keys(act.config.bones).forEach(boneName => {
+                    const bone = getBone(boneName);
+                    if (!bone || !state.restPose?.[boneName]) return;
+                    bone._boneName = boneName;
+                    // 随机化幅度
+                    const rotatedBones = {};
+                    for (const [k, v] of Object.entries(act.config.bones[boneName])) {
+                        rotatedBones[k] = v * amp;
+                    }
+                    _applyActionToBone(bone, state.restPose[boneName], rotatedBones, factor, act.config);
+                });
+
+                if (progress >= 1.0) {
+                    if (act.config.returnToRest) {
+                        Object.keys(act.config.bones).forEach(bn => {
+                            const b = getBone(bn);
+                            if (b && state.restPose?.[bn]) b.rotation.copy(state.restPose[bn]);
+                        });
+                    }
+                    if (act.config.repeat && act.repeatCount < act.config.repeat - 1) {
+                        act.repeatCount++;
+                        act.startTime = now;
+                        return;
+                    }
+                    state.actionLayers[layer] = null;
+                }
+            }
+        }
+
+        // ========== 视线/注视系统 v2 (对话驱动 + 自然微动) ==========
+        state.gazeTarget = { x: 0, y: 0 };
+        state.gazeMode = 'idle';
+        state.gazeChangeTime = 0;
+        state.gazeSpeakingTimer = 0;
+        state.gazeMicroSaccade = { x: 0, y: 0 };
+
+        function updateGaze(now) {
+            const speaking = isSpeaking();
+
+            // 微眼跳: 始终存在, 高频低幅
+            state.gazeMicroSaccade.x = Math.sin(now * 0.013) * 0.008 + Math.sin(now * 0.031) * 0.005;
+            state.gazeMicroSaccade.y = Math.sin(now * 0.017) * 0.006 + Math.sin(now * 0.029) * 0.004;
+
+            if (speaking) {
+                // 说话时: 视线自然漂移 (更柔和, 范围更小)
+                if (now - state.gazeChangeTime > 2000 + Math.random() * 3000) {
+                    state.gazeChangeTime = now;
+                    state.gazeTarget.x = (Math.random() - 0.5) * 0.06;
+                    state.gazeTarget.y = (Math.random() - 0.5) * 0.04;
+                }
+            } else {
+                // 倾听/待机: 随机扫视 + 偶尔注视"用户"
+                if (now - state.gazeChangeTime > 2500 + Math.random() * 4000) {
+                    state.gazeChangeTime = now;
+                    // 50% 概率注视"用户方向", 50% 随机扫视
+                    if (Math.random() < 0.5) {
+                        state.gazeTarget.x = (Math.random() - 0.5) * 0.04;
+                        state.gazeTarget.y = (Math.random() - 0.5) * 0.03;
+                    } else {
+                        state.gazeTarget.x = (Math.random() - 0.5) * 0.18;
+                        state.gazeTarget.y = (Math.random() - 0.5) * 0.10;
+                    }
+                }
+            }
+
+            // 偶尔快速扫视(saccade): 真正的跳跃式眼动
+            if (now - state.gazeChangeTime > 1000 && Math.random() < 0.002) {
+                state.gazeTarget.x += (Math.random() - 0.5) * 0.06;
+                state.gazeTarget.y += (Math.random() - 0.5) * 0.04;
+                state.gazeChangeTime = now;
+            }
+
+            const head = getBone('head');
+            if (head && state.restPose?.head) {
+                const targetX = state.restPose.head.y + state.gazeTarget.x + state.gazeMicroSaccade.x;
+                const targetY = state.restPose.head.x + state.gazeTarget.y + state.gazeMicroSaccade.y;
+                // 更平滑的追踪 (降低跟随速度)
+                if (!state.actionLayers[2] && !state.actionLayers[3]) {
+                    head.rotation.y += (targetX - head.rotation.y) * 0.015;
+                    head.rotation.x += (targetY - head.rotation.x) * 0.015;
+                }
+            }
+        }
+
+        // ========== 待机状态机 v2 (多姿态 + 随机时间) ==========
+        state.idleState = {
+            phase: 'still',
+            nextChange: performance.now() + 3000 + Math.random() * 4000,
+            currentPose: null,
+            lastHandPose: 0,
+        };
+
+        const IDLE_POSES = [
+            // 轻微调整重心
+            { name: 'weightShift', spine: { x: 0.01, z: 0.015 }, duration: 1200 },
+            // 微微歪头
+            { name: 'microTilt', head: { z: 0.03 }, neck: { z: 0.015 }, duration: 800 },
+            // 微微低头
+            { name: 'microBow', head: { x: 0.02 }, duration: 600 },
+            // 不看镜头
+            { name: 'lookAway', head: { y: -0.04 }, duration: 1000 },
+        ];
+
+        function updateIdlePose(now) {
+            if (state.actionLayers[2] || state.actionLayers[3]) return;
+
+            if (now > state.idleState.nextChange) {
+                state.idleState.nextChange = now + 3000 + Math.random() * 5000;
+                // 60% 概率发一个微动作
+                if (Math.random() < 0.6) {
+                    const pose = IDLE_POSES[Math.floor(Math.random() * IDLE_POSES.length)];
+                    state.idleState.currentPose = {
+                        ...pose,
+                        startTime: now,
+                    };
+                } else {
+                    state.idleState.currentPose = null;
+                }
+            }
+
+            // 应用待机微动作
+            const pose = state.idleState.currentPose;
+            if (!pose) return;
+
+            const elapsed = now - pose.startTime;
+            const p = Math.min(elapsed / pose.duration, 1.0);
+            const factor = 0.5 - 0.5 * Math.cos(p * Math.PI * 2);
+
+            if (pose.spine) {
+                const spine = getBone('spine');
+                if (spine && state.restPose?.spine) {
+                    if (pose.spine.x) spine.rotation.x = state.restPose.spine.x + pose.spine.x * factor;
+                    if (pose.spine.z) spine.rotation.z = state.restPose.spine.z + pose.spine.z * factor;
+                }
+            }
+            if (pose.head) {
+                const head = getBone('head');
+                if (head && state.restPose?.head) {
+                    for (const [axis, val] of Object.entries(pose.head)) {
+                        head.rotation[axis] += val * factor;
+                    }
+                }
+            }
+            if (pose.neck) {
+                const neck = getBone('neck');
+                if (neck && state.restPose?.neck) {
+                    for (const [axis, val] of Object.entries(pose.neck)) {
+                        neck.rotation[axis] += val * factor;
+                    }
+                }
+            }
+
+            if (p >= 1.0) {
+                state.idleState.currentPose = null;
+            }
+        }
+
+        // ========== 新情绪系统集成 ==========
+        const EMOTION_BLENDSHAPES_V2 = {
+            joy: { happy: 0.75, mouthSmile: 0.65, cheekSquintLeft: 0.25, cheekSquintRight: 0.25, browInnerUp: 0.35 },
+            trust: { mouthSmile: 0.45, browInnerUp: 0.25, eyeSquintLeft: 0.2, eyeSquintRight: 0.2 },
+            fear: { browInnerUp: 0.5, eyeWideLeft: 0.4, eyeWideRight: 0.4,aa: 0.2 },
+            surprise: {aa: 0.3, jawOpen: 0.2, eyeWideLeft: 0.7, eyeWideRight: 0.7, browInnerUp: 0.6 },
+            sadness: { mouthFrownLeft: 0.3, mouthFrownRight: 0.3, browInnerDownLeft: 0.5, browInnerDownRight: 0.5, eyeSquintLeft: 0.25, eyeSquintRight: 0.25 },
+            disgust: { mouthPressLeft: 0.3, mouthPressRight: 0.3, noseWrinkleLeft: 0.2, noseWrinkleRight: 0.2 },
+            anger: { browDownLeft: 0.5, browDownRight: 0.5, mouthPressLeft: 0.3, mouthPressRight: 0.3 },
+            anticipation: { browInnerUp: 0.3, eyeSquintLeft: 0.2, eyeSquintRight: 0.2, mouthSmile: 0.15 },
+        };
+
+        function updateEmotionState(emotionState, ttsTotalMs, precomputedBlends) {
+            const intensity = (emotionState && emotionState.intensity) || 0.5;
+            const blends = {};
+            if (precomputedBlends && typeof precomputedBlends === 'object') {
+                // 优先使用后端算好的实际 blendshapes (来自 emotion_state.py:get_expression_blend)
+                for (const [k, v] of Object.entries(precomputedBlends)) {
+                    if (k.startsWith('_')) continue;
+                    if (typeof v === 'number') blends[k] = v;
+                }
+            } else if (emotionState && emotionState.primary) {
+                // 回退: 用前端的 EMOTION_BLENDSHAPES_V2 表自行合成
+                const primary = emotionState.primary;
+                const secondary = emotionState.secondary;
+                const pBlend = EMOTION_BLENDSHAPES_V2[primary] || {};
+                for (const [k, v] of Object.entries(pBlend)) {
+                    blends[k] = v * intensity;
+                }
+                if (secondary && EMOTION_BLENDSHAPES_V2[secondary]) {
+                    const sBlend = EMOTION_BLENDSHAPES_V2[secondary];
+                    for (const [k, v] of Object.entries(sBlend)) {
+                        if (k in blends) blends[k] = Math.min(1, blends[k] + v * intensity * 0.3);
+                        else blends[k] = v * intensity * 0.3;
+                    }
+                }
+            } else {
+                return;
+            }
+            blends._startTime = performance.now();
+            // 关键修复: 表情淡出时长跟 TTS 实际时长走, 长回答不会"提前下班"
+            // ttsTotalMs 来自后端 done 事件, 是各段 mp3 真实时长之和
+            const baseDur = intensity >= 0.7 ? 2500 : intensity >= 0.4 ? 1800 : 1200;
+            const audioDur = (typeof ttsTotalMs === 'number' && ttsTotalMs > 0) ? ttsTotalMs : 0;
+            // 表情至少维持整个语音时长 + 1s 收尾; 强情绪(>=0.7)额外加 1s 维持
+            blends._duration = Math.max(baseDur, audioDur + (intensity >= 0.7 ? 1000 : 500));
+            blends._intensity = intensity;
+            state.currentEmotionBlend = blends;
+        }
+
+        function triggerActionByEmotion(emotion) {
+            const map = {
+                'joy': 'wave', 'delighted': 'wave', 'happy': 'wave',
+                'caring': 'nod', 'trust': 'nod',
+                'surprised': 'tilt', 'surprise': 'tilt',
+                'thinking': 'think', 'anticipation': 'think',
+                'focused': 'think',
+                'warm': 'nod', 'anger': 'point',
+            };
+            const actionName = map[emotion];
+            if (actionName) playAction(actionName, 1);
+        }
+
+        function triggerGesturesForReply(text) {
+            if (!text || text.length < 5) return;
+            const gestures = [];
+            // 1. 问候/打招呼 -> 挥手
+            if (/你好|您好|嗨|哈喽|hello|hi\b|欢迎|见到/i.test(text)) gestures.push('wave');
+            // 2. 感谢/致谢 -> 鞠躬
+            if (/谢谢|感谢|多谢|辛苦|劳驾|拜托/i.test(text)) gestures.push('bow');
+            // 3. 介绍/指出/指向 -> 手势
+            if (/是|就是|位于|坐落|建于|始建于|这是|这里有|这就是|我们到|看这边|请看|你看|景区|景点|古迹|建筑|博物馆/i.test(text)) gestures.push('gesture');
+            // 4. 推荐/建议 -> 张开/展示
+            if (/推荐|建议|可以|适合|值得|可以试试|不妨|强烈|务必|一定要|首选|最佳/i.test(text)) gestures.push('spread');
+            // 5. 反问/思考 -> 思考
+            if (/呢|吗|什么|怎么|为什么|如何|考虑|想想|或许|可能|也许|大概/i.test(text)) gestures.push('think');
+            // 6. 肯定 -> 点头
+            if (/是的|对的|没错|当然|确实|很好|好的|没问题|当然可以|没问题|正是|正是如此/i.test(text)) gestures.push('nod');
+            // 7. 否定 -> 摇头
+            if (/不|没|别|不行|不能|不对|不是|没有|无法|不可|不对哦/i.test(text)) gestures.push('shake');
+            // 8. 强调/重点 -> 指点
+            if (/重点|注意|切记|一定|必须|关键|核心|其实|实际上|事实上|特别|非常|极其/i.test(text)) gestures.push('point');
+            // 9. 展开/打开 -> 张开手
+            if (/打开|展开|摊开|敞开|展示|呈现|露出/i.test(text)) gestures.push('openHand');
+            // 10. 警告/小心/叮嘱 -> 双臂交叉
+            if (/小心|注意安全|危险|当心|警惕|不要|请勿|禁止|避免|切勿|警告/i.test(text)) gestures.push('crossArms');
+            // 11. 安慰/安抚 -> 安慰
+            if (/没关系|别担心|别怕|安心|放心|没事|理解|同情|心疼|辛苦你了|不要紧/i.test(text)) gestures.push('comfort');
+            // 12. 倾斜/好奇/疑问 -> 歪头
+            if (/奇怪|奇怪|真奇怪|咦|咦?|哎|哎?|是吗|这样啊|哦\?|嗯\?/i.test(text)) gestures.push('tilt');
+            // 13. 长文兜底: 至少 1 个动作, 多则按比例 (3-5 个)
+            if (gestures.length === 0 && text.length > 30) {
+                const fallback = ['gesture', 'nod', 'spread', 'think'];
+                gestures.push(fallback[Math.floor(Math.random() * fallback.length)]);
+            }
+            // 长文 (>80字) 再补 1-2 个随机动作, 增加生动感
+            if (text.length > 80) {
+                const pool = ['gesture', 'nod', 'spread', 'tilt'];
+                for (let i = 0; i < 2; i++) {
+                    const cand = pool[Math.floor(Math.random() * pool.length)];
+                    if (!gestures.includes(cand)) gestures.push(cand);
+                }
+            }
+            // 去重 (保持顺序) 并限长
+            const uniq = [];
+            const seen = new Set();
+            for (const g of gestures) {
+                if (!seen.has(g)) { uniq.push(g); seen.add(g); }
+            }
+            const final = uniq.slice(0, 4);
+            if (final.length === 0) return;
+            // 第一个动作立即触发，后续动作随机间隔 0.8-2s
+            playAction(final[0], 1);
+            let cumulativeDelay = 800 + Math.random() * 600;
+            for (let i = 1; i < final.length; i++) {
+                const delay = cumulativeDelay;
+                cumulativeDelay += 1200 + Math.random() * 1500;
+                setTimeout(() => playAction(final[i], 0), delay);
+            }
+        }
+
+        // 情绪表情动作衰减 (在每一帧检查是否需要淡出动作表情)
+        function updateActionEmotionDecay(now) {
+            const blend = state.currentEmotionBlend;
+            if (!blend || !blend._startTime) return;
+            const elapsed = now - blend._startTime;
+            const duration = blend._duration || 1000;
+            const progress = elapsed / duration;
+            if (progress >= 1.0) {
+                state.currentEmotionBlend = {};
+                return;
+            }
+            // 轻柔淡出
+            const fadeOut = 1 - Math.max(0, (progress - 0.7) / 0.3);
+            if (fadeOut < 1) {
+                for (const k of Object.keys(blend)) {
+                    if (k.startsWith('_')) continue;
+                    if (typeof blend[k] === 'number') {
+                        blend[k] = blend[k] * fadeOut;
+                    }
+                }
+            }
+        }
+
+        // 暴露到全局作用域，供app.js调用
+        window.triggerActionByEmotion = triggerActionByEmotion;
+        window.playAction = playAction;
+        window.triggerGesturesForReply = triggerGesturesForReply;
+        window.setActionTimeline = setActionTimeline;
+        window.updateEmotionState = updateEmotionState;
+        window.vrmBlendShapeTargets = blendShapeTargets;
+        window.vrmBlendShapeCurrents = blendShapeCurrents;
+
+        window.updateEmotionBlend = function(blendShapes) {
+            state.currentEmotionBlend = blendShapes || {};
+        };
+
+        window.activateMood = function(mood, duration) {
+            state.mood = mood;
+            const until = performance.now() + duration;
+            //if (mood === 'speaking' && duration > 0) state.speakingUntil = until;
+            if (mood === 'happy' && duration > 0) state.smileUntil = until;
+            if (duration > 0) {
+                setTimeout(() => {
+                     if (mood === 'speaking' ) {
+                        state.mood = performance.now() < state.smileUntil ? 'happy' : 'idle';
+                     } else 
+                    if (mood === 'happy' && performance.now() >= state.smileUntil) {
+                        state.mood = 'idle';
+                    }
+                }, duration + 40);
+            }
+        };
+// [已清理] window.startLipSync 残留已删除, 该函数从未被调用, 删掉避免与 audioManager._syncLipWithAudio 冲突
+        function applyBodyMotion(delta, now) {
+            updateAction(delta);
+
+            state.motionTime += delta;
+
+            if (!state.restPose) captureRestPose();
+
+            const head = getBone('head');
+            const neck = getBone('neck');
+            const spine = getBone('spine');
+            const chest = getBone('chest');
+
+            const t = state.motionTime;
+            const speaking = isSpeaking();
+
+            const hasLayer2Or3 = state.actionLayers[2] || state.actionLayers[3];
+            const hasLayer1 = state.actionLayers[1];
+
+            // ---- 待机微动作 (无高层动作时运行) ----
+            if (!hasLayer2Or3) {
+                updateIdlePose(now);
+            }
+
+            // ---- 层级 0: 呼吸微摆（始终运行，动作时减弱）----
+            const breathRate = hasLayer2Or3 ? 0.4 : 1.0;
+            const breathCycle = Math.sin(t * (1.4 + Math.sin(t * 0.1) * 0.2)); // 呼吸频率微变
+            const breathing = breathCycle * 0.012 * breathRate;
+            const bodySway = Math.sin(t * (0.6 + Math.sin(t * 0.08) * 0.15)) * 0.04 * breathRate;
+
+            // ---- 层级 1: 说话头部微动 ----
+            let headNod = 0, headTilt = 0;
+            if (speaking && !hasLayer1) {
+                // 说话时头部微动: 叠加不同频率创造自然感
+                headNod = Math.sin(t * 3.2) * 0.03 + Math.sin(t * 1.9) * 0.02 + Math.sin(t * 5.4) * 0.01;
+                headTilt = Math.sin(t * 2.4) * 0.025 + Math.sin(t * 4.1) * 0.015;
+            } else if (!hasLayer1) {
+                headNod = Math.sin(t * 1.1) * 0.018 + Math.sin(t * 2.3) * 0.01;
+                headTilt = Math.sin(t * 0.85) * 0.012;
+            }
+
+            // Apply layer 0: breathing (always)
+            if (chest && state.restPose?.chest && !hasLayer2Or3) {
+                chest.rotation.x = state.restPose.chest.x + breathing * 0.8;
+                chest.rotation.y = state.restPose.chest.y + bodySway * 0.3;
+            }
+            if (spine && state.restPose?.spine && !hasLayer2Or3) {
+                spine.rotation.x = state.restPose.spine.x + breathing * 0.5;
+                spine.rotation.y = state.restPose.spine.y + bodySway * 0.2;
+            }
+
+            // Apply layer 0+1: head/neck (if not overridden by higher layers)
+            if (!hasLayer2Or3) {
+                if (neck && state.restPose?.neck) {
+                    neck.rotation.x = state.restPose.neck.x + headNod * 0.6 + breathing * 0.2;
+                    neck.rotation.y = state.restPose.neck.y + bodySway * 0.5 + headTilt * 0.3;
+                    neck.rotation.z = state.restPose.neck.z + Math.sin(t * 0.55) * 0.012;
+                }
+                if (head && state.restPose?.head) {
+                    head.rotation.x = state.restPose.head.x + headNod + breathing * 0.3;
+                    head.rotation.y = state.restPose.head.y + bodySway * 0.7 + headTilt * 0.5;
+                    head.rotation.z = state.restPose.head.z + Math.sin(t * 0.45) * 0.015;
+                }
+            }
+
+            // Gaze (only when no layer 2/3 action on head)
+            if (!hasLayer2Or3) {
+                updateGaze(now);
+            }
+
+            // 思考时手部微颤
+            if (state.actionLayers[2]?.name === 'think') {
+                const hand = getBone('rightHand');
+                if (hand) {
+                    hand.rotation.z += Math.sin(t * 2.5) * 0.015;
+                    // 手指微动
+                    hand.rotation.x += Math.sin(t * 3.7) * 0.008;
+                }
+            }
+        }
+
+        
+        function setupControls() {
+        }
+       
+       
+
+        function ensureAnimation() {
+            if (state.animationStarted) return;
+            state.animationStarted = true;
+
+            const tick = () => {
+                requestAnimationFrame(tick);
+                const delta = clock.getDelta();
+                const now = performance.now();
+
+                if (state.vrm) {
+                    applyBodyMotion(delta, now);
+                    applyFacialMotion(now);
+                    updateActionEmotionDecay(now);
+                    state.vrm.update(delta);
+                } else if (state.vrmRoot) {
+                    state.vrmRoot.rotation.y += 0.003;
+                }
+
+                renderer.render(scene, camera);
+            };
+
+            tick();
+        }
+
+        const loader = new GLTFLoader();
+        loader.register((parser) => new VRMLoaderPlugin(parser));
+
+        showStatus('正在获取配置...');
+
+        function assetUrl(path) {
+            return new URL(String(path).replace(/^\/+/, ''), document.baseURI).toString();
+        }
+
+        function resolveVrmPath() {
+            const cfg = window.avatarConfig;
+            if (cfg && cfg.vrmModel) {
+                return assetUrl(cfg.vrmModel);
+            }
+            return null;
+        }
+
+        async function tryLoadInitialVrm() {
+            let vrmPath = resolveVrmPath();
+            if (!vrmPath) {
+                showStatus('等待配置加载...');
+                for (let i = 0; i < 30; i++) {
+                    await new Promise(r => setTimeout(r, 200));
+                    vrmPath = resolveVrmPath();
+                    if (vrmPath) break;
+                }
+            }
+            if (!vrmPath) {
+                showStatus('暂无可用数字人模型');
+                return;
+            }
+            window.initialVrmModel = new URL(vrmPath, document.baseURI).pathname.split('/').pop();
+            showStatus('正在加载 VRM 模型...');
+            await loadVRMModel(vrmPath);
+        }
+
+        function loadVRMModel(vrmPath) {
+            const nextVrmFile = new URL(vrmPath, document.baseURI).pathname.split('/').pop();
+            const previousRoot = state.vrmRoot;
+            return new Promise((resolve, reject) => {
+                loader.load(
+                    vrmPath,
+                    (gltf) => {
+                        const nextVrm = gltf.userData.vrm || null;
+                        const nextRoot = nextVrm?.scene || gltf.scene;
+                        if (previousRoot && previousRoot !== nextRoot) {
+                            scene.remove(previousRoot);
+                            previousRoot.traverse((obj) => {
+                                if (obj.isMesh) {
+                                    obj.geometry?.dispose();
+                                    const mats = obj.material ? (Array.isArray(obj.material) ? obj.material : [obj.material]) : [];
+                                    mats.forEach(m => m.dispose());
+                                }
+                            });
+                        }
+                        state.vrm = nextVrm;
+                        state.vrmRoot = nextRoot;
+                        window._currentVrmFile = nextVrmFile;
+
+                        state.vrmRoot.traverse((obj) => {
+                            if (obj.isMesh) {
+                                obj.castShadow = true;
+                                obj.receiveShadow = true;
+                                obj.frustumCulled = false;
+                            }
+                        });
+
+                        frameModel(state.vrmRoot);
+                        captureRestPose();
+                        scene.add(state.vrmRoot);
+                        requestAnimationFrame(() => {
+                            if (state.vrmRoot) frameModel(state.vrmRoot);
+                        });
+                        // 关键修复: VRM 模型刚加载, 重新扫描可用的 expression preset,
+                        // 让 ARKIT_TO_VRM_PRESET 映射能准确匹配 (不同模型 preset 集合可能不同)
+                        _vrmAvailablePresets = null;
+                        getAvailablePresets();
+                        loadingEl.style.display = 'none';
+                        ensureAnimation();
+                        resolve();
+                    },
+                    undefined,
+                    (error) => {
+                        if (previousRoot) loadingEl.style.display = 'none';
+                        else showStatus('数字人加载失败，请稍后重试');
+                        console.error('VRM load failed:', error);
+                        reject(error);
+                    }
+                );
+            });
+        }
+
+        window.reloadVRMModel = loadVRMModel;
+
+        setupControls();
+        await tryLoadInitialVrm();
+        console.log("VRM 模块已就绪，reloadVRMModel 已可用");
+
+        window.addEventListener('resize', resize);
+    } catch (error) {
+        showStatus('3D 组件加载失败，请刷新重试');
+        console.error('VRM bootstrap failed:', error);
+    }
+    
+    </script>
+</body>
+</html>

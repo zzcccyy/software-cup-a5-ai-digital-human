@@ -1,0 +1,76 @@
+# API keys & secrets (MUST keep out of git)
+.env
+.env.*
+!.env.example
+backend/.env
+.venv/
+*.key
+*.pem
+*.crt
+*.p12
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyc
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+
+# Audio / media
+*.mp3
+*.wav
+*.ogg
+*.flac
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+backend/admin_data/scenic.db
+
+# Runtime / generated
+backend/static/audio/
+backend/chroma_db/
+outputs/
+.tmp/
+output_utf8.json
+data.db
+backend/stderr.log
+backend/stdout.log
+*.log
+*.zip
+backend/admin_data/*.corrupt-*
+backend/admin_data/conversations.json
+backend/admin_data/settings.json
+test_report_assets/
+
+# IDE
+.idea/
+.vscode/
+.vs/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Reference projects (large, not core)
+SentiAvatar-main/
+emotion-resonate-main/
+Open-LLM-VTuber-main/
+live2d-models/
+
+# Backup files
+*.backup
+*.bak
+*.pua.log
+*_backup.*
+

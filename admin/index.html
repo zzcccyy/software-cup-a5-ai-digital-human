@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <title>灵山胜境 AI 数字人 · 管理后台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/admin/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        /* 优化补充样式：确认弹窗 / 危险操作 / 按钮处理中态 */
+        .confirm-text { margin: 4px 0 8px; line-height: 1.6; color: #444; }
+        .btn-danger { background: #e5484d; color: #fff; border-color: #e5484d; }
+        .btn-danger:hover { background: #d33b40; border-color: #d33b40; }
+        .btn[data-loading] { opacity: .65; cursor: progress; }
+        button:disabled { opacity: .6; cursor: not-allowed; }
+        .required { color: #e5484d; font-style: normal; }
+    </style>
+</head>
+<body>
+    <!-- 浮动金色光粒 -->
+    <div class="dharma-particles" id="dharma-particles"></div>
+
+    <div class="login-shell" id="login-shell">
+        <div class="login-card">
+            <div class="login-copy">
+                <!-- 莲花图标 -->
+                <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="width:40px;height:40px;margin-bottom:8px;">
+                    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 6 Q18 12 16 18 Q14 12 16 6Z" fill="rgba(184,146,58,0.25)" stroke="rgba(184,146,58,0.5)" stroke-width="0.8"/>
+                        <path d="M8 10 Q12 13 14 18 Q10 15 8 10Z" fill="rgba(184,146,58,0.15)" stroke="rgba(184,146,58,0.35)" stroke-width="0.6"/>
+                        <path d="M24 10 Q20 13 18 18 Q22 15 24 10Z" fill="rgba(184,146,58,0.15)" stroke="rgba(184,146,58,0.35)" stroke-width="0.6"/>
+                        <circle cx="16" cy="17" r="2" fill="rgba(184,146,58,0.3)" stroke="rgba(184,146,58,0.5)" stroke-width="0.5"/>
+                        <path d="M16 18 Q15 24 16 28" stroke="rgba(90,138,106,0.3)" stroke-width="0.8" fill="none"/>
+                    </g>
+                </svg>
+                <span class="brand-tag">智慧景区</span>
+                <h1>管理后台登录</h1>
+                <p>请输入管理员账号和密码后进入后台。</p>
+            </div>
+            <form class="login-form" id="login-form">
+                <label>
+                    <span>管理员账号</span>
+                    <input class="input" id="login-username" name="username" type="text" autocomplete="username" placeholder="请输入管理员账号" required>
+                </label>
+                <label>
+                    <span>管理员密码</span>
+                    <input class="input" id="login-password" name="password" type="password" autocomplete="current-password" placeholder="请输入管理员密码" required>
+                </label>
+                <button class="btn btn-primary login-btn" type="submit">登录后台</button>
+                <p class="login-error" id="login-error"></p>
+            </form>
+        </div>
+    </div>
+
+    <div class="admin-shell">
+        <aside class="sidebar">
+            <div class="sidebar-content">
+                <div class="sidebar-header">
+                    <!-- 莲花图标 -->
+                    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="width:36px;height:36px;margin-bottom:8px;">
+                        <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 6 Q18 12 16 18 Q14 12 16 6Z" fill="rgba(184,146,58,0.25)" stroke="rgba(184,146,58,0.5)" stroke-width="0.8"/>
+                            <path d="M8 10 Q12 13 14 18 Q10 15 8 10Z" fill="rgba(184,146,58,0.15)" stroke="rgba(184,146,58,0.35)" stroke-width="0.6"/>
+                            <path d="M24 10 Q20 13 18 18 Q22 15 24 10Z" fill="rgba(184,146,58,0.15)" stroke="rgba(184,146,58,0.35)" stroke-width="0.6"/>
+                            <path d="M4 14 Q9 14 12 18 Q8 16 4 14Z" fill="rgba(184,146,58,0.08)" stroke="rgba(184,146,58,0.2)" stroke-width="0.5"/>
+                            <path d="M28 14 Q23 14 20 18 Q24 16 28 14Z" fill="rgba(184,146,58,0.08)" stroke="rgba(184,146,58,0.2)" stroke-width="0.5"/>
+                            <circle cx="16" cy="17" r="2" fill="rgba(184,146,58,0.3)" stroke="rgba(184,146,58,0.5)" stroke-width="0.5"/>
+                            <path d="M16 18 Q15 24 16 28" stroke="rgba(90,138,106,0.3)" stroke-width="0.8" fill="none"/>
+                            <path d="M10 26 Q13 24 16 26 Q19 24 22 26" stroke="rgba(90,138,106,0.2)" stroke-width="0.6" fill="none"/>
+                        </g>
+                    </svg>
+                    <span class="brand-tag">智慧景区</span>
+                    <h1>AI 数字人后台</h1>
+                    <p>统一管理知识、问答、数字人管理与运营数据。</p>
+                </div>
+
+                <nav class="nav">
+                    <button class="nav-item active" data-page="dashboard" data-title="运营总览" data-desc="查看服务趋势、热点问题、情绪反馈与运营建议。">
+                        <span class="nav-icon">总</span>
+                        <span>运营总览</span>
+                    </button>
+                    <button class="nav-item" data-page="knowledge" data-title="知识库管理" data-desc="维护讲解内容、标签分类与景区知识条目。">
+                        <span class="nav-icon">知</span>
+                        <span>知识库管理</span>
+                    </button>
+                    <button class="nav-item" data-page="faq" data-title="高频问题管理" data-desc="管理高频问答，持续优化游客咨询体验。">
+                        <span class="nav-icon">问</span>
+                        <span>高频问题管理</span>
+                    </button>
+                    <button class="nav-item" data-page="avatar" data-title="数字人管理" data-desc="管理游客端可选择的数字人模型。">
+                        <span class="nav-icon">形</span>
+                        <span>数字人管理</span>
+                    </button>
+                    <button class="nav-item" data-page="conversations" data-title="对话记录" data-desc="查看游客消息、情绪标签与满意度记录。">
+                        <span class="nav-icon">聊</span>
+                        <span>对话记录</span>
+                    </button>
+                    <button class="nav-item" data-page="settings" data-title="系统设置" data-desc="统一配置模型、知识模式、语音与响应目标。">
+                        <span class="nav-icon">设</span>
+                        <span>系统设置</span>
+                    </button>
+                    <button class="nav-item" data-page="logs" data-title="操作日志" data-desc="查看管理员的操作记录，支持过滤与导出。">
+                        <span class="nav-icon">记</span>
+                        <span>操作日志</span>
+                    </button>
+                </nav>
+            </div>
+
+            <button class="sidebar-toggle" id="sidebarToggle" title="收起侧栏">
+                <span class="toggle-arrow"></span>
+            </button>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow">
+                        <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;">
+                            <g fill="none" stroke-linecap="round">
+                                <path d="M8 2 Q9 5 8 8 Q7 5 8 2Z" fill="rgba(184,146,58,0.3)" stroke="rgba(184,146,58,0.5)" stroke-width="0.5"/>
+                                <path d="M4 4 Q6 5 7 8 Q5 6 4 4Z" fill="rgba(184,146,58,0.15)" stroke="rgba(184,146,58,0.3)" stroke-width="0.4"/>
+                                <path d="M12 4 Q10 5 9 8 Q11 6 12 4Z" fill="rgba(184,146,58,0.15)" stroke="rgba(184,146,58,0.3)" stroke-width="0.4"/>
+                                <circle cx="8" cy="7" r="1" fill="rgba(184,146,58,0.3)"/>
+                            </g>
+                        </svg>
+                        灵山胜境 AI 数字人后台
+                    </p>
+                    <h2 id="page-title">运营总览</h2>
+                    <p class="page-desc" id="page-desc">查看服务趋势、热点问题、情绪反馈与运营建议。</p>
+                </div>
+                <div class="topbar-actions">
+                    <span class="admin-user" id="admin-user">管理员</span>
+                    <a class="ghost-btn" href="/" target="_blank" rel="noopener">游客端</a>
+                    <a class="ghost-btn" href="/data-screen" target="_blank" rel="noopener">数据大屏</a>
+                    <button class="ghost-btn" id="btn-logout" type="button">退出登录</button>
+                </div>
+            </header>
+
+            <section class="page active" id="page-dashboard">
+                <section class="hero-card">
+                    <!-- 法轮装饰 -->
+                    <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:12px;right:12px;width:40px;height:40px;opacity:0.08;pointer-events:none;">
+                        <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(184,146,58,0.6)" stroke-width="1"/>
+                        <circle cx="40" cy="40" r="5" fill="none" stroke="rgba(184,146,58,0.4)" stroke-width="0.8"/>
+                        <circle cx="40" cy="40" r="18" fill="none" stroke="rgba(184,146,58,0.25)" stroke-width="0.6"/>
+                        <line x1="40" y1="4" x2="40" y2="22" stroke="rgba(184,146,58,0.35)" stroke-width="0.8"/>
+                        <line x1="40" y1="58" x2="40" y2="76" stroke="rgba(184,146,58,0.35)" stroke-width="0.8"/>
+                        <line x1="4" y1="40" x2="22" y2="40" stroke="rgba(184,146,58,0.35)" stroke-width="0.8"/>
+                        <line x1="58" y1="40" x2="76" y2="40" stroke="rgba(184,146,58,0.35)" stroke-width="0.8"/>
+                        <line x1="12" y1="12" x2="24" y2="24" stroke="rgba(184,146,58,0.25)" stroke-width="0.6"/>
+                        <line x1="56" y1="56" x2="68" y2="68" stroke="rgba(184,146,58,0.25)" stroke-width="0.6"/>
+                        <line x1="68" y1="12" x2="56" y2="24" stroke="rgba(184,146,58,0.25)" stroke-width="0.6"/>
+                        <line x1="12" y1="68" x2="24" y2="56" stroke="rgba(184,146,58,0.25)" stroke-width="0.6"/>
+                    </svg>
+                    <div>
+                        <p class="section-kicker">今日重点</p>
+                        <h3>把游客问答、知识维护与运营反馈放进同一个管理视图。</h3>
+                        <p>后台与游客端统一视觉语言，日常运营人员可以直接完成查看、编辑、保存与复盘。</p>
+                    </div>
+                    <div class="hero-actions">
+                        <button class="btn" id="btn-copy-report" type="button">复制周报摘要</button>
+                        <button class="btn" id="btn-export-report" type="button">导出报表</button>
+                        <button class="btn btn-primary" id="btn-refresh" type="button">刷新看板</button>
+                    </div>
+                </section>
+
+                <div class="metrics" id="metrics"></div>
+
+                <div class="dashboard-grid">
+                    <article class="card card-wide">
+                        <div class="card-head">
+                            <div>
+                                <p class="section-kicker">趋势</p>
+                                <h3>近 7 日对话量</h3>
+                            </div>
+                        </div>
+                        <div class="chart" id="trend-chart" style="min-height:200px;"></div>
+                    </article>
+
+                    <article class="card">
+                        <div class="card-head">
+                            <div>
+                                <p class="section-kicker">情绪反馈</p>
+                                <h3>情绪分布</h3>
+                            </div>
+                        </div>
+                        <div class="sentiment-grid" id="sentiment"></div>
+                        <div id="sentiment-chart" style="min-height:200px;margin-top:8px;"></div>
+                    </article>
+
+                    <article class="card">
+                        <div class="card-head">
+                            <div>
+                                <p class="section-kicker">热点</p>
+                                <h3>高频问题</h3>
+                            </div>
+                        </div>
+                        <div class="stack-list" id="hot-list"></div>
+                    </article>
+
+                    <article class="card card-wide">
+                        <div class="card-head">
+                            <div>
+                                <p class="section-kicker">主题关注</p>
+                                <h3>游客关注标签</h3>
+                            </div>
+                        </div>
+                        <div class="tags" id="tags" style="margin-bottom:8px;"></div>
+                        <div id="topic-chart" style="min-height:200px;"></div>
+                    </article>
+                </div>
+
+                <div class="report-grid">
+                    <article class="card">
+                        <div class="card-head">
+                            <div>
+                                <p class="section-kicker">周报摘要</p>
+                                <h3>运营报告</h3>
+                            </div>
+                        </div>
+                        <div class="report-summary" id="report-summary"></div>
+                    </article>
+
+                    <article class="card">
+                        <div class="card-head">
+                            <div>
+                                <p class="section-kicker">建议</p>
+                                <h3>本周优化方向</h3>
+                            </div>
+                        </div>
+                        <div class="stack-list" id="report-suggestions"></div>
+                    </article>
+                </div>
+
+                <div class="dashboard-grid">
+                    <article class="card card-wide">
+                        <div class="card-head">
+                            <div>
+                                <p class="section-kicker">深度分析</p>
+                                <h3>景点提及次数</h3>
+                            </div>
+                        </div>
+                        <div class="heatmap-container" id="heatmap-container"></div>
+                        <div id="heatmap-chart" style="min-height:200px;"></div>
+                    </article>
+
+                    <article class="card">
+                        <div class="card-head">
+                            <div>
+                                <p class="section-kicker">时段分析</p>
+                                <h3>服务高峰分布</h3>
+                            </div>
+                        </div>
+                        <div id="hourly-chart" style="min-height:200px;"></div>
+                    </article>
+
+                    <article class="card">
+                        <div class="card-head">
+                            <div>
+                                <p class="section-kicker">画像</p>
+                                <h3>游客偏好画像</h3>
+                            </div>
+                        </div>
+                        <div id="profile-chart" style="min-height:200px;"></div>
+                    </article>
+                </div>
+            </section>
+
+            <section class="page" id="page-knowledge">
+                <div class="page-actions">
+                    <div class="toolbar">
+                        <input class="input" id="search-knowledge" type="text" placeholder="搜索标题、分类、标签或内容">
+                        <button class="btn" id="btn-search" type="button">搜索</button>
+                        <button class="btn" id="btn-reset-knowledge" type="button">重置</button>
+                    </div>
+                    <button class="btn btn-primary" id="btn-add-knowledge" type="button">新增知识</button>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-meta" id="knowledge-meta"></div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>标题</th>
+                                <th>分类</th>
+                                <th>标签</th>
+                                <th>来源</th>
+                                <th>更新时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="knowledge-tbody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="page" id="page-faq">
+                <div class="page-actions">
+                    <div class="inline-note">把高频问题整理成稳定答案，减少重复人工讲解。</div>
+                    <button class="btn btn-primary" id="btn-add-faq" type="button">新增高频问题</button>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-meta" id="faq-meta"></div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>问题</th>
+                                <th>分类</th>
+                                <th>使用次数</th>
+                                <th>答案摘要</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="faq-tbody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="page" id="page-avatar">
+                <div class="page-actions">
+                    <div class="inline-note">这里只管理模型是否对游客可用。每个模型的声音、语气、服装和表情均为固定配置。</div>
+                    <div class="toolbar">
+                        <button class="btn btn-primary" id="btn-enable-all-vrm" type="button">启用全部模型</button>
+                        <button class="btn" id="btn-refresh-avatar-models" type="button">刷新模型列表</button>
+                    </div>
+                </div>
+
+                <article class="card" style="margin-top: 18px;">
+                    <div class="card-head">
+                        <div>
+                            <p class="section-kicker">模型</p>
+                            <h3>VRM 模型管理</h3>
+                        </div>
+                    </div>
+                    <div class="inline-note" style="margin-bottom: 12px;">启用的模型会出现在游客端选择框中；至少保留一个启用模型。</div>
+                    <div class="table-card">
+                        <div class="table-meta" id="vrm-meta">加载中...</div>
+                        <table class="model-table">
+                            <thead>
+                                <tr>
+                                    <th>模型文件</th>
+                                    <th>样子/服装（固定）</th>
+                                    <th>声音（固定）</th>
+                                    <th>语气风格（固定）</th>
+                                    <th>表情风格（固定）</th>
+                                    <th>大小</th>
+                                    <th>状态与操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vrm-tbody"></tbody>
+                        </table>
+                    </div>
+                </article>
+            </section>
+
+            <section class="page" id="page-conversations">
+                <div class="page-actions">
+                    <div class="inline-note">查看真实对话记录，辅助判断游客关注主题与满意度。</div>
+                    <button class="btn" id="btn-refresh-convs" type="button">刷新列表</button>
+                </div>
+
+                <form class="conversation-filters" id="conversation-filters" aria-label="对话记录筛选">
+                    <label class="conversation-filter">
+                        <span>时间范围</span>
+                        <select class="input" id="conversation-filter-period">
+                            <option value="">全部时间</option>
+                            <option value="day">近一天</option>
+                            <option value="week">近一周</option>
+                            <option value="month">近一个月</option>
+                        </select>
+                    </label>
+                    <label class="conversation-filter">
+                        <span>情绪</span>
+                        <select class="input" id="conversation-filter-emotion">
+                            <option value="">全部情绪</option>
+                            <option value="warm">亲和讲解</option>
+                            <option value="delighted">积极回应</option>
+                            <option value="focused">高效导览</option>
+                            <option value="caring">安抚陪伴</option>
+                            <option value="neutral">正常讲解</option>
+                            <option value="joy">积极情绪</option>
+                            <option value="trust">信任</option>
+                            <option value="anticipation">期待推荐</option>
+                        </select>
+                    </label>
+                    <label class="conversation-filter">
+                        <span>偏好</span>
+                        <select class="input" id="conversation-filter-interest">
+                            <option value="">全部偏好</option>
+                            <option value="history">历史文化</option>
+                            <option value="nature">自然风光</option>
+                            <option value="family">亲子互动</option>
+                            <option value="relax">舒缓漫游</option>
+                        </select>
+                    </label>
+                    <label class="conversation-filter">
+                        <span>评分</span>
+                        <select class="input" id="conversation-filter-satisfaction">
+                            <option value="">全部评分</option>
+                            <option value="5">5 分</option>
+                            <option value="4">4 分</option>
+                            <option value="3">3 分</option>
+                            <option value="2">2 分</option>
+                            <option value="1">1 分</option>
+                        </select>
+                    </label>
+                    <div class="conversation-filter-actions">
+                        <button class="btn btn-primary" id="btn-apply-conv-filters" type="submit">查询</button>
+                        <button class="btn" id="btn-reset-conv-filters" type="button">清除筛选</button>
+                    </div>
+                </form>
+
+                <div class="conversation-tabs" role="tablist" aria-label="对话记录视图">
+                    <button class="btn-tab active" id="btn-show-conversation-list" type="button" role="tab" aria-selected="true">对话列表</button>
+                    <button class="btn-tab" id="btn-show-conversation-analysis" type="button" role="tab" aria-selected="false">AI 智能分析</button>
+                </div>
+
+                <div class="conversation-view" id="conversation-list-view" role="tabpanel">
+                    <div class="conversation-list" id="conversation-list" aria-live="polite" aria-busy="false"></div>
+                    <div id="conversation-pagination" class="pagination-bar"></div>
+                </div>
+
+                <section class="conversation-view conversation-analysis-view" id="conversation-analysis-view" role="tabpanel" hidden>
+                    <div class="conversation-analysis-toolbar">
+                        <div>
+                            <p class="section-kicker">筛选结果洞察</p>
+                            <h3>让 AI 帮你发现对话里的趋势与机会</h3>
+                            <p class="conversation-analysis-scope" id="conversation-analysis-scope">当前筛选范围：全部对话</p>
+                        </div>
+                        <button class="btn btn-primary" id="btn-run-conversation-analysis" type="button">运行 AI 分析</button>
+                    </div>
+
+                    <div class="conversation-analysis-status" id="conversation-analysis-status" aria-live="polite"></div>
+                    <div id="conversation-analysis-report" hidden>
+                        <div class="metrics conversation-analysis-metrics" id="conversation-analysis-metrics"></div>
+
+                        <div class="conversation-analysis-grid conversation-analysis-distributions">
+                            <article class="card">
+                                <div class="card-head"><div><p class="section-kicker">关注方向 · 饼图</p><h3>偏好分布</h3></div></div>
+                                <div class="analysis-chart" id="conversation-analysis-interest-chart" role="img" aria-label="偏好分布饼图"></div>
+                            </article>
+                            <article class="card">
+                                <div class="card-head"><div><p class="section-kicker">情绪反馈 · 柱状图</p><h3>情绪分布</h3></div></div>
+                                <div class="analysis-chart" id="conversation-analysis-emotion-chart" role="img" aria-label="情绪分布柱状图"></div>
+                            </article>
+                            <article class="card">
+                                <div class="card-head"><div><p class="section-kicker">体验评价 · 柱状图</p><h3>评分分布</h3></div></div>
+                                <div class="analysis-chart" id="conversation-analysis-satisfaction-chart" role="img" aria-label="满意度评分柱状图"></div>
+                            </article>
+                            <article class="card">
+                                <div class="card-head"><div><p class="section-kicker">变化趋势 · 折线图</p><h3>对话量趋势</h3></div></div>
+                                <div class="analysis-chart" id="conversation-analysis-trend-chart" role="img" aria-label="筛选结果对话量折线图"></div>
+                            </article>
+                            <article class="card analysis-card-wide">
+                                <div class="card-head"><div><p class="section-kicker">游客问题 · 关键词云</p><h3>游客问题中最常出现的词</h3></div></div>
+                                <div class="analysis-keyword-cloud" id="conversation-analysis-keyword-cloud" role="img" aria-label="游客问题关键词云图"></div>
+                            </article>
+                        </div>
+
+                        <div class="conversation-analysis-grid">
+                            <article class="card">
+                                <div class="card-head"><div><p class="section-kicker">结论摘要</p><h3>本次分析结论</h3></div></div>
+                                <div class="analysis-summary" id="conversation-analysis-summary"></div>
+                            </article>
+                            <article class="card">
+                                <div class="card-head"><div><p class="section-kicker">关键发现</p><h3>值得优先关注的问题</h3></div></div>
+                                <div class="analysis-stack" id="conversation-analysis-findings"></div>
+                            </article>
+                        </div>
+
+                        <div class="conversation-analysis-grid">
+                            <article class="card">
+                                <div class="card-head"><div><p class="section-kicker">知识盲区</p><h3>可以补充的内容</h3></div></div>
+                                <div class="analysis-stack" id="conversation-analysis-gaps"></div>
+                            </article>
+                            <article class="card">
+                                <div class="card-head"><div><p class="section-kicker">改进建议</p><h3>下一步行动</h3></div></div>
+                                <div class="analysis-stack" id="conversation-analysis-suggestions"></div>
+                            </article>
+                        </div>
+
+                        <article class="card analysis-cases-card">
+                            <div class="card-head"><div><p class="section-kicker">典型案例</p><h3>从真实对话中抽取的样本</h3></div></div>
+                            <div class="analysis-cases" id="conversation-analysis-cases"></div>
+                        </article>
+
+                        <article class="card analysis-limitations-card">
+                            <div class="card-head"><div><p class="section-kicker">数据说明</p><h3>阅读报告前请注意</h3></div></div>
+                            <div class="analysis-stack" id="conversation-analysis-limitations"></div>
+                        </article>
+                    </div>
+                </section>
+            </section>
+
+            <section class="page" id="page-logs">
+                <div class="page-actions">
+                    <div class="toolbar">
+                        <select class="input" id="log-filter-action" style="width:auto;">
+                            <option value="">全部操作</option>
+                            <option value="create">新增</option>
+                            <option value="update">修改</option>
+                            <option value="delete">删除</option>
+                            <option value="login">登录</option>
+                            <option value="logout">登出</option>
+                            <option value="export">导出</option>
+                        </select>
+                        <select class="input" id="log-filter-resource" style="width:auto;">
+                            <option value="">全部模块</option>
+                            <option value="knowledge">知识库</option>
+                            <option value="faq">高频问题</option>
+                            <option value="avatar">数字人</option>
+                            <option value="settings">系统设置</option>
+                            <option value="guide-preset">导游预设</option>
+                            <option value="vrm-model">VRM模型</option>
+                            <option value="auth">认证</option>
+                            <option value="operation-logs">操作日志</option>
+                        </select>
+                        <button class="btn" id="btn-search-logs" type="button">查询</button>
+                    </div>
+                    <button class="btn" id="btn-export-logs" type="button">导出 CSV</button>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-meta" id="logs-meta">加载中...</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>时间</th>
+                                <th>管理员</th>
+                                <th>操作</th>
+                                <th>模块</th>
+                                <th>描述</th>
+                                <th>IP</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-tbody"></tbody>
+                    </table>
+                </div>
+                <div id="logs-pagination" class="pagination-bar"></div>
+            </section>
+
+            <section class="page" id="page-settings">
+                <div class="page-actions">
+                    <div class="inline-note">这些设置会直接影响数字人的回答风格、性能目标与语音链路。</div>
+                    <button class="btn btn-primary" id="btn-save-settings" type="button">保存设置</button>
+                </div>
+
+                <article class="card">
+                    <div class="card-head">
+                        <div>
+                            <p class="section-kicker">核心参数</p>
+                            <h3>系统配置</h3>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <label>
+                            <span>当前 LLM 提供商</span>
+                            <input class="input" id="setting-model" type="text" readonly aria-readonly="true">
+                        </label>
+                        <label>
+                            <span>TTS 语音</span>
+                            <select class="input" id="setting-tts-voice">
+                                <option value="温柔女声">温柔女声</option>
+                                <option value="活泼少女">活泼少女</option>
+                                <option value="热情女声">热情女声</option>
+                                <option value="知性女声">知性女声</option>
+                                <option value="磁性男声">磁性男声</option>
+                                <option value="深沉男声">深沉男声</option>
+                                <option value="阳光男声">阳光男声</option>
+                                <option value="稳重男声">稳重男声</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>知识模式</span>
+                            <input class="input" id="setting-knowledge" type="text" placeholder="当前知识库模式" readonly aria-readonly="true">
+                        </label>
+                        <label>
+                            <span>响应目标（非可调运行参数）</span>
+                            <input class="input" id="setting-latency" type="text" placeholder="毫秒" readonly aria-readonly="true">
+                        </label>
+                        <label>
+                            <span>情绪引擎</span>
+                            <input class="input" id="setting-emotion" type="text" placeholder="情绪分析引擎描述" readonly aria-readonly="true">
+                        </label>
+                        <label>
+                            <span>语音识别模式</span>
+                            <input class="input" id="setting-asr" type="text" placeholder="ASR 模式" readonly aria-readonly="true">
+                        </label>
+                        <label>
+                            <span>管理员账号</span>
+                            <input class="input" id="setting-admin-user" type="text">
+                        </label>
+                        <label>
+                            <span>管理员密码</span>
+                            <input class="input" id="setting-admin-password" type="password" placeholder="留空则保持当前密码">
+                        </label>
+                        <label class="checkbox-row">
+                            <input id="setting-tts" type="checkbox" disabled aria-readonly="true">
+                            <span>启用语音播报</span>
+                        </label>
+                    </div>
+                </article>
+            </section>
+        </main>
+    </div>
+
+    <dialog id="dialog">
+        <form id="dialog-form" method="dialog">
+            <div class="dialog-header">
+                <h3 id="dialog-title">编辑内容</h3>
+                <button class="btn-close" id="btn-close" type="button" aria-label="关闭">×</button>
+            </div>
+            <div class="dialog-body" id="dialog-body"></div>
+            <div class="dialog-footer">
+                <button class="btn" id="btn-cancel" type="button">取消</button>
+                <button class="btn btn-primary" type="submit">保存</button>
+            </div>
+        </form>
+    </dialog>
+
+    <div class="toast-stack" id="toast-stack"></div>
+
+    <script src="/admin/app.js"></script>
+    <!-- 金色浮动光粒 -->
+    <script>
+    (function() {
+        const container = document.getElementById('dharma-particles');
+        if (!container) return;
+        const count = 12;
+        for (let i = 0; i < count; i++) {
+            const p = document.createElement('div');
+            p.className = 'dharma-particle';
+            const left = Math.random() * 100;
+            const duration = 18 + Math.random() * 28;
+            const delay = Math.random() * duration;
+            const size = 2 + Math.random() * 2.5;
+            const drift = -30 + Math.random() * 60;
+            p.style.cssText = `
+                left: ${left}%;
+                width: ${size}px;
+                height: ${size}px;
+                animation-duration: ${duration}s;
+                animation-delay: -${delay}s;
+                --drift: ${drift}px;
+                opacity: ${0.12 + Math.random() * 0.2};
+            `;
+            container.appendChild(p);
+        }
+    })();
+    </script>
+</body>
+</html>
